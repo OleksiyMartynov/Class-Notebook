@@ -2,14 +2,13 @@ package school.com.classnotebook.controllers;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 
 import java.util.List;
 
 import models.containers.MyClassData;
-import models.containers.MyNoteData;
 import models.database.MyAppDatabase;
 import school.com.classnotebook.R;
 
@@ -22,6 +21,7 @@ public class MyClassListActivity extends ActionBarActivity {
         setContentView(R.layout.activity_my_class_list);
 
         //test
+        /*
         MyAppDatabase classDb = MyAppDatabase.getInstance(this);
         classDb.saveClassData(new MyClassData("math", "bob", "1/2/2014"));
         classDb.saveClassData(new MyClassData("english", "john", "1/3/2014"));
@@ -38,9 +38,17 @@ public class MyClassListActivity extends ActionBarActivity {
         {
             Log.i("test", nd.toString());
         }
+        */
+        prepareList(MyAppDatabase.getInstance(this).getClassList());
     }
 
-
+    private void prepareList(List<MyClassData> data)
+    {
+        ListView listView = (ListView) findViewById(R.id.classListView);
+        MyClassListAdapter adapter = new MyClassListAdapter(this, R.layout.class_list_cell, data);
+        listView.setAdapter(adapter);
+        //on data changes call adapter.notifyDataSetChanged();
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.

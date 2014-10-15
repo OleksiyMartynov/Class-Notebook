@@ -2,9 +2,15 @@ package school.com.classnotebook.controllers;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.List;
+
+import models.containers.MyClassData;
+import models.containers.MyNoteData;
+import models.database.MyAppDatabase;
 import school.com.classnotebook.R;
 
 
@@ -14,6 +20,24 @@ public class MyClassListActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_class_list);
+
+        //test
+        MyAppDatabase classDb = MyAppDatabase.getInstance(this);
+        classDb.saveClassData(new MyClassData("math", "bob", "1/2/2014"));
+        classDb.saveClassData(new MyClassData("english", "john", "1/3/2014"));
+        List<MyClassData> classes = classDb.getClassList();
+        for (MyClassData cd : classes)
+        {
+            Log.i("test", cd.toString());
+        }
+        int fk = 1;
+        classDb.saveNoteData(new MyNoteData(MyNoteData.Type.text.toString(), "calc 1", "1/7/2014", fk));
+        classDb.saveNoteData(new MyNoteData(MyNoteData.Type.text.toString(), "calc 2", "1/12/2014", fk));
+        List<MyNoteData> notes = classDb.getNoteList(fk);
+        for (MyNoteData nd : notes)
+        {
+            Log.i("test", nd.toString());
+        }
     }
 
 

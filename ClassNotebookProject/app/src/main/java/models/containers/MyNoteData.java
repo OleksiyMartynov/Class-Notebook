@@ -7,8 +7,8 @@ import java.util.Date;
  */
 public class MyNoteData
 {
-    public enum Type {text,image,audio,drawing}
     private int id =-1;
+    private int fk_id = -1;
     private Type typeOfData;
     private Date date;
 
@@ -34,5 +34,7 @@ public class MyNoteData
     public Date getDate() {
         return date;
     }
+
+    public enum Type {text, image, audio, drawing}
 }
 

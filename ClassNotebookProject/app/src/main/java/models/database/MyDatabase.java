@@ -10,14 +10,14 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyDatabase extends SQLiteOpenHelper {
+abstract class MyDatabase extends SQLiteOpenHelper {
     private Context context;
     private SQLiteDatabase db;
     private String name;
     private int ver;
     private String[] onCreate, onUpgrade;
 
-    public MyDatabase(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, String[] createQuery, String[] upgradeQuery) {
+    protected MyDatabase(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, String[] createQuery, String[] upgradeQuery) {
         super(context, name, factory, version);
         this.context = context;
         this.name = name;

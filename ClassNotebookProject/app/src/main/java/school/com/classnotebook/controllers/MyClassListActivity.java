@@ -72,7 +72,7 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
             {
                 Log.i("ClassListActivity", "clicked:" + data.get(i).getName());
                 Intent intent = new Intent(MyClassListActivity.this, MyNoteListActivity.class);
-                intent.putExtra(MyNoteListActivity.NOTE_PARENT_ID_KEY, data.get(i).getId());
+                intent.putExtra(MyNoteListActivity.CLASS_ID, data.get(i).getId());
                 startActivity(intent);
             }
         });

@@ -8,10 +8,10 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.TimePicker;
 
 import models.containers.MyClassData;
 import models.database.MyAppDatabase;
@@ -33,26 +33,8 @@ public class MyClassDialog extends DialogFragment
         final View v = inflater.inflate(R.layout.dialog_class_info_layout, null);
         TextView title = (TextView) v.findViewById(R.id.classDialogTitleTextVIew);
         title.setText("New Class");
-        builder.setView(v)
-                .setPositiveButton("Save", new DialogInterface.OnClickListener()
-                {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id)
-                    {
+        builder.setView(v).setPositiveButton("Save", null)
 
-                        EditText className = (EditText) v.findViewById(R.id.classDialogClassNameEditText);
-                        EditText classProffName = (EditText) v.findViewById(R.id.classDialogTeacherNameEditText);
-                        DatePicker date = (DatePicker) v.findViewById(R.id.classDialogDatePicker);
-                        TimePicker time = (TimePicker) v.findViewById(R.id.classDialogTimePicker);
-                        //todo validate inputs
-                        MyAppDatabase classDb = MyAppDatabase.getInstance(getActivity());
-                        classDb.saveClassData(new MyClassData(className.getText().toString(), classProffName.getText().toString(), date.getMonth() + "/" + date.getDayOfMonth() + "/" + date.getYear() + " " + time.getCurrentHour() + ":" + time.getCurrentMinute()));
-                        if (mListener != null)
-                        {
-                            mListener.onPositiveButtonClicked();
-                        }
-                    }
-                })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
@@ -65,9 +47,60 @@ public class MyClassDialog extends DialogFragment
                     }
                 });
 
-        Dialog d = builder.create();
-
+        final AlertDialog d = builder.create();
+        d.setOnShowListener(new DialogInterface.OnShowListener()
+        {
+            @Override
+            public void onShow(DialogInterface dialogInterface)
+            {
+                Button save = d.getButton(AlertDialog.BUTTON_POSITIVE);
+                save.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View view)
+                    {
+                        EditText className = (EditText) v.findViewById(R.id.classDialogClassNameEditText);
+                        EditText classProffName = (EditText) v.findViewById(R.id.classDialogTeacherNameEditText);
+                        DatePicker date = (DatePicker) v.findViewById(R.id.classDialogDatePicker);
+                        //TimePicker time = (TimePicker) v.findViewById(R.id.classDialogTimePicker);
+                        if (!valid(className.getText().toString(), classProffName.getText().toString()))
+                        {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                            builder.setMessage("Please enter a valid class name.")
+                                    .setCancelable(false)
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener()
+                                    {
+                                        public void onClick(DialogInterface dialog, int id)
+                                        {
+                                            //do things
+                                        }
+                                    });
+                            AlertDialog alert = builder.create();
+                            alert.show();
+                        } else
+                        {
+                            MyAppDatabase classDb = MyAppDatabase.getInstance(getActivity());
+                            classDb.saveClassData(new MyClassData(className.getText().toString(), classProffName.getText().toString(), date.getMonth() + "/" + date.getDayOfMonth() + "/" + date.getYear()));//+ " " + time.getCurrentHour() + ":" + time.getCurrentMinute()
+                            if (mListener != null)
+                            {
+                                mListener.onPositiveButtonClicked();
+                            }
+                            d.dismiss();
+                        }
+                    }
+                });
+            }
+        });
         return d;
+    }
+
+    private boolean valid(String className, String classProffName)
+    {
+        if (className == null || className.isEmpty())
+        {
+            return false;
+        }
+        return true;
     }
 
     @Override

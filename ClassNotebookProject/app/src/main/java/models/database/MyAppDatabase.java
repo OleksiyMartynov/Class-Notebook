@@ -47,6 +47,17 @@ public class MyAppDatabase extends MyDatabase
         return data;
     }
 
+    public MyClassData getClassData(int id)
+    {
+        String select = "SELECT * FROM " + Tables.class_table + " WHERE " + ClassTableColumns.class_id + " = " + id + " ;";
+        List<List<String>> results = executeQuery(select);
+        for (List<String> row : results)
+        {
+            return new MyClassData(Integer.valueOf(row.get(0)), row.get(1), row.get(2), row.get(3));
+        }
+        return null;
+    }
+
     public List<MyNoteData> getNoteList()
     {
         String selectAll = "SELECT * FROM " + Tables.note_table + ";";
@@ -57,6 +68,17 @@ public class MyAppDatabase extends MyDatabase
             data.add(new MyNoteData(Integer.valueOf(row.get(0)), row.get(1), row.get(2), row.get(3)));
         }
         return data;
+    }
+
+    public MyNoteData getNoteData(int id)
+    {
+        String select = "SELECT * FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_id + " = " + id + " ;";
+        List<List<String>> results = executeQuery(select);
+        for (List<String> row : results)
+        {
+            return new MyNoteData(Integer.valueOf(row.get(0)), row.get(1), row.get(2), row.get(3));
+        }
+        return null;
     }
 
     public List<MyNoteData> getNoteList(int classId)
@@ -84,6 +106,7 @@ public class MyAppDatabase extends MyDatabase
             return false;
         }
     }
+
     public boolean saveNoteData(MyNoteData data)
     {
         String insertQuery = "INSERT INTO " + Tables.note_table + " VALUES(NULL,'" + data.getName() + "','" + data.getDate() + "','" + data.getTypeOfData() + "'," + data.getFk_id() + ");";
@@ -130,6 +153,7 @@ public class MyAppDatabase extends MyDatabase
         String deleteQuery = "DELETE FROM " + Tables.class_table + " WHERE " + ClassTableColumns.class_id + " = " + data.getId() + ";";
         try
         {
+            deleteNoteData(data.getId());//delete existing notes with same fk id and class id
             executeQuery(deleteQuery);
             return true;
         } catch (Exception e)
@@ -140,7 +164,12 @@ public class MyAppDatabase extends MyDatabase
 
     public boolean deleteNoteData(MyNoteData data)
     {
-        String deleteQuery = "DELETE FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_id + " = " + data.getId() + ";";
+        return deleteNoteData(data.getFk_id());
+    }
+
+    private boolean deleteNoteData(int fk_id)
+    {
+        String deleteQuery = "DELETE FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_id + " = " + fk_id + ";";
         try
         {
             executeQuery(deleteQuery);
@@ -150,9 +179,19 @@ public class MyAppDatabase extends MyDatabase
             return false;
         }
     }
-    private enum Tables {class_table, note_table}
 
-    private enum ClassTableColumns {class_id, class_name, class_proff, class_date}
+    private enum Tables
+    {
+        class_table, note_table
+    }
 
-    private enum NoteTableColumns {note_id, note_date, note_name, note_type, note_class_fk}
+    private enum ClassTableColumns
+    {
+        class_id, class_name, class_proff, class_date
+    }
+
+    private enum NoteTableColumns
+    {
+        note_id, note_date, note_name, note_type, note_class_fk
+    }
 }

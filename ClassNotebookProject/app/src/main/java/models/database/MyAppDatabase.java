@@ -84,7 +84,6 @@ public class MyAppDatabase extends MyDatabase
             return false;
         }
     }
-
     public boolean saveNoteData(MyNoteData data)
     {
         String insertQuery = "INSERT INTO " + Tables.note_table + " VALUES(NULL,'" + data.getName() + "','" + data.getDate() + "','" + data.getTypeOfData() + "'," + data.getFk_id() + ");";
@@ -95,6 +94,59 @@ public class MyAppDatabase extends MyDatabase
         } catch (Exception e)
         {
             Log.w("MyAppDatabase", "insert of note_data failed");
+            return false;
+        }
+    }
+
+    public boolean deleteClassData(List<MyClassData> data)
+    {
+        //todo cascade delete the notes with the class id
+        boolean flag = true;
+        for (MyClassData item : data)
+        {
+            if (!deleteClassData(item))
+            {
+                flag = false;
+            }
+        }
+        return flag;
+    }
+
+    public boolean deleteNoteData(List<MyNoteData> data)
+    {
+        boolean flag = true;
+        for (MyNoteData item : data)
+        {
+            if (!deleteNoteData(item))
+            {
+                flag = false;
+            }
+        }
+        return flag;
+    }
+
+    public boolean deleteClassData(MyClassData data)
+    {
+        String deleteQuery = "DELETE FROM " + Tables.class_table + " WHERE " + ClassTableColumns.class_id + " = " + data.getId() + ";";
+        try
+        {
+            executeQuery(deleteQuery);
+            return true;
+        } catch (Exception e)
+        {
+            return false;
+        }
+    }
+
+    public boolean deleteNoteData(MyNoteData data)
+    {
+        String deleteQuery = "DELETE FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_id + " = " + data.getId() + ";";
+        try
+        {
+            executeQuery(deleteQuery);
+            return true;
+        } catch (Exception e)
+        {
             return false;
         }
     }

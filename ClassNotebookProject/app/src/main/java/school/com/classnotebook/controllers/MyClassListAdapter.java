@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.List;
@@ -41,6 +42,7 @@ public class MyClassListAdapter extends ArrayAdapter<MyClassData>
             holder.className = (TextView) convertView.findViewById(R.id.classNameTextVIew);
             holder.classProff = (TextView) convertView.findViewById(R.id.proffNameTextView);
             holder.classDate = (TextView) convertView.findViewById(R.id.classDateTextView);
+            holder.classView = (LinearLayout) convertView.findViewById(R.id.classCellView);
             convertView.setTag(holder);
         } else
         {
@@ -50,6 +52,21 @@ public class MyClassListAdapter extends ArrayAdapter<MyClassData>
         holder.className.setText(classData.getName());
         holder.classProff.setText(classData.getProff());
         holder.classDate.setText(classData.getDate());
+        /*
+        holder.classView.setTag(classData);
+        holder.classView.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                Object obj =view.getTag();
+                if(obj!=null && obj instanceof MyClassData)
+                {
+                    MyClassData d=(MyClassData)obj;
+                    Log.i("adapter","clicked:"+d.getName());
+                }
+            }
+        });*/
 
         return convertView;
     }
@@ -65,5 +82,6 @@ public class MyClassListAdapter extends ArrayAdapter<MyClassData>
         TextView className;
         TextView classProff;
         TextView classDate;
+        LinearLayout classView;
     }
 }

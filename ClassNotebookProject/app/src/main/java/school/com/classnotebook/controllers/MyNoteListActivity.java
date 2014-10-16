@@ -1,19 +1,25 @@
 package school.com.classnotebook.controllers;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import school.com.classnotebook.R;
 
 
-public class NoteListActivity extends ActionBarActivity {
-
+public class MyNoteListActivity extends ActionBarActivity
+{
+    public static String NOTE_PARENT_ID_KEY = "note_parent_id";
+    private int noteFkId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_list);
+
+        noteFkId = getIntent().getIntExtra(MyNoteListActivity.NOTE_PARENT_ID_KEY, -1);
+        Log.i("MyNoteListActivity", "get notes for class with id:" + noteFkId);
     }
 
 

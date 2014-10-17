@@ -66,7 +66,7 @@ public class MyNoteListActivity extends ActionBarActivity implements MyDialogLis
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
             {
                 Intent intent = new Intent(MyNoteListActivity.this, MyNoteActivity.class);
-                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.text.toString());
+                intent.putExtra(MyNoteActivity.NOTE_TYPE, data.get(i).getTypeOfData());
                 intent.putExtra(MyNoteActivity.CLASS_ID, classId);
                 intent.putExtra(MyNoteActivity.NOTE_ID, data.get(i).getId());
                 startActivity(intent);

@@ -269,8 +269,14 @@ public class MyAppDatabase extends MyDatabase
         List<MyNoteData> data = new ArrayList<MyNoteData>();
         for (List<Object> row : results)
         {
-            MyNoteData n = new MyNoteData(((Integer) row.get(0)).intValue(), (String) row.get(1), (String) row.get(3), (String) row.get(2), ((Integer) row.get(4)).intValue(), byteObjToPrimitives((Byte[]) row.get(5)));
-            data.add(n);
+            try
+            {
+                MyNoteData n = new MyNoteData(((Integer) row.get(0)).intValue(), (String) row.get(1), (String) row.get(3), (String) row.get(2), ((Integer) row.get(4)).intValue(), byteObjToPrimitives((Byte[]) row.get(5)));
+                data.add(n);
+            } catch (Exception e)
+            {
+                Log.i("AppDatabase", "malformed data found in row");
+            }
         }
         return data;
     }
@@ -285,6 +291,7 @@ public class MyAppDatabase extends MyDatabase
         }
         return out;
     }
+
     private enum Tables
     {
         class_table, note_table

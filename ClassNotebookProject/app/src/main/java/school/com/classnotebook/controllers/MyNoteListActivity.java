@@ -2,6 +2,7 @@ package school.com.classnotebook.controllers;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -54,7 +55,7 @@ public class MyNoteListActivity extends ActionBarActivity implements MyDialogLis
 
     private void prepareList(MyClassData d)
     {
-        data = MyAppDatabase.getInstance(this).getNoteList(d.getId());
+        data = MyAppDatabase.getInstance(this).getNoteListSmart(d.getId());
         ListView listView = (ListView) findViewById(R.id.notesListView);
         adapter = new MyNoteListAdapter(this, R.layout.note_list_cell, data);
         listView.setLongClickable(true);
@@ -64,7 +65,11 @@ public class MyNoteListActivity extends ActionBarActivity implements MyDialogLis
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
             {
-                Log.i("MyNoteListActivity", "todo on click");
+                Intent intent = new Intent(MyNoteListActivity.this, MyNoteActivity.class);
+                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.text.toString());
+                intent.putExtra(MyNoteActivity.CLASS_ID, classId);
+                intent.putExtra(MyNoteActivity.NOTE_ID, data.get(i).getId());
+                startActivity(intent);
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
@@ -180,7 +185,7 @@ public class MyNoteListActivity extends ActionBarActivity implements MyDialogLis
     private void refresh()
     {
         data.clear();
-        data.addAll(MyAppDatabase.getInstance(this).getNoteList(classId));
+        data.addAll(MyAppDatabase.getInstance(this).getNoteListSmart(classId));
         adapter.notifyDataSetChanged();
     }
 

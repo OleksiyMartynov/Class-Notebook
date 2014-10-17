@@ -3,6 +3,7 @@ package school.com.classnotebook.controllers;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
@@ -35,11 +36,15 @@ public class MyNoteDialog extends DialogFragment
                         {
                             case 0:
                             {
-                                MyAppDatabase.getInstance(getActivity()).saveNoteData(new MyNoteData(MyNoteData.Type.text.toString(), dateAsString(), "test text note", classId));
+
                                 if (mListener != null)
                                 {
                                     mListener.onPositiveButtonClicked();
                                 }
+                                Intent intent = new Intent(getActivity(), MyNoteActivity.class);
+                                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.text.toString());
+                                intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
+                                getActivity().startActivity(intent);
                                 break;
                             }
                             case 1:
@@ -78,6 +83,11 @@ public class MyNoteDialog extends DialogFragment
     public void setListener(MyDialogListener listener)
     {
         mListener = listener;
+    }
+
+    public int getClassId()
+    {
+        return classId;
     }
 
     public void setClassId(int id)

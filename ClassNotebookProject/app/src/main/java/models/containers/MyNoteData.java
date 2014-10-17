@@ -5,11 +5,12 @@ package models.containers;
  */
 public class MyNoteData
 {
-    private int id =-1;
+    private int id = -1;
     private int fk_id = -1;
     private String typeOfData;
     private String date;
     private String name;
+    private byte[] data;
 
     public MyNoteData(int id, String typeOfData, String name, String date)
     {
@@ -41,6 +42,26 @@ public class MyNoteData
         this.typeOfData = typeOfData;
         this.date = date;
         this.name = name;
+    }
+
+    public MyNoteData(String typeOfData, String date, String name, int fk_id, byte[] data)
+    {
+        this.id = id;
+        this.fk_id = fk_id;
+        this.typeOfData = typeOfData;
+        this.date = date;
+        this.name = name;
+        this.data = data;
+    }
+
+    public MyNoteData(int id, String typeOfData, String date, String name, int fk_id, byte[] data)
+    {
+        this.id = id;
+        this.fk_id = fk_id;
+        this.typeOfData = typeOfData;
+        this.date = date;
+        this.name = name;
+        this.data = data;
     }
 
     public int getId()
@@ -80,6 +101,15 @@ public class MyNoteData
         return date;
     }
 
-    public enum Type {text, image, audio, drawing}
+    public byte[] getData()
+    {
+        return data;
+    }
+
+    public enum Type
+    {
+        text, image, audio, drawing
+    }
+
 }
 

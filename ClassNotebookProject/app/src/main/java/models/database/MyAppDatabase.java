@@ -1,6 +1,8 @@
 package models.database;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -14,14 +16,14 @@ import models.containers.MyNoteData;
  */
 public class MyAppDatabase extends MyDatabase
 {
-    public static final int NOTEBOOK_DATABASE_VERSION = 1;
+    public static final int NOTEBOOK_DATABASE_VERSION = 3;
     private static String CREATE_CLASS_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.class_table + " (" + ClassTableColumns.class_id + " INTEGER PRIMARY KEY AUTOINCREMENT, " + ClassTableColumns.class_name + " TEXT, " + ClassTableColumns.class_proff + " TEXT, " + ClassTableColumns.class_date + " TEXT);";
     ;
-    private static String CREATE_NOTE_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.note_table + " (" + NoteTableColumns.note_id + " INTEGER PRIMARY KEY AUTOINCREMENT, " + NoteTableColumns.note_type + " TEXT, " + NoteTableColumns.note_name + " TEXT, " + NoteTableColumns.note_date + " TEXT, " + NoteTableColumns.note_class_fk + " INTEGER);";
+    private static String CREATE_NOTE_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.note_table + " (" + NoteTableColumns.note_id + " INTEGER PRIMARY KEY AUTOINCREMENT, " + NoteTableColumns.note_type + " TEXT, " + NoteTableColumns.note_name + " TEXT, " + NoteTableColumns.note_date + " TEXT, " + NoteTableColumns.note_class_fk + " INTEGER," + NoteTableColumns.note_data + " BLOB" + ");";
     ;
-    private static String UPGRADE_CLASS_TABLE = "DROP TABLE IF EXISTS " + Tables.class_table + ";";
+    private static String UPGRADE_CLASS_TABLE = "DROP TABLE IF EXISTS " + Tables.class_table + "; ";
     ;
-    private static String UPGRADE_NOTE_TABLE = "DROP TABLE IF EXISTS " + Tables.note_table + ";";
+    private static String UPGRADE_NOTE_TABLE = "DROP TABLE IF EXISTS " + Tables.note_table + "; ";
     private static MyAppDatabase instance;
 
     private MyAppDatabase(Context context)
@@ -38,6 +40,19 @@ public class MyAppDatabase extends MyDatabase
     public boolean updateClassData(MyClassData classData)
     {
         String updateQuery = "UPDATE " + Tables.class_table + " SET " + ClassTableColumns.class_name + " = " + "'" + classData.getName() + "'" + ", " + ClassTableColumns.class_proff + " = " + "'" + classData.getProff() + "'" + ", " + ClassTableColumns.class_date + " = " + "'" + classData.getDate() + "'" + " WHERE " + ClassTableColumns.class_id + " = " + classData.getId() + ";";
+        try
+        {
+            executeQuery(updateQuery);
+            return false;
+        } catch (Exception e)
+        {
+            return true;
+        }
+    }
+
+    public boolean updateNoteData(MyNoteData noteData)
+    {
+        String updateQuery = "UPDATE " + Tables.note_table + " SET " + NoteTableColumns.note_name + " = " + "'" + noteData.getName() + "'" + ", " + NoteTableColumns.note_date + " = " + "'" + noteData.getDate() + "'" + " WHERE " + NoteTableColumns.note_id + " = " + noteData.getId() + ";";
         try
         {
             executeQuery(updateQuery);
@@ -206,6 +221,70 @@ public class MyAppDatabase extends MyDatabase
         }
     }
 
+    public void saveNoteDataSmart(MyNoteData data)
+    {
+        String insertQuery = "INSERT INTO " + Tables.note_table + "( " + NoteTableColumns.note_id + "," + NoteTableColumns.note_type + "," + NoteTableColumns.note_name + "," + NoteTableColumns.note_date + "," + NoteTableColumns.note_class_fk + "," + NoteTableColumns.note_data + ")" + " VALUES(?,?,?,?,?,? );";
+        SQLiteDatabase db = getWritableDatabase();
+        SQLiteStatement statement = db.compileStatement(insertQuery);
+        statement.clearBindings();
+        statement.bindNull(1);
+        statement.bindString(2, data.getTypeOfData());
+        statement.bindString(3, data.getName());
+        statement.bindString(4, data.getDate());
+        statement.bindString(5, Integer.toString(data.getFk_id()));
+        statement.bindBlob(6, data.getData());
+        statement.executeInsert();
+        //db.close();
+    }
+
+    public void updateNoteDataSmart(MyNoteData data)
+    {
+        String insertQuery = "UPDATE " + Tables.note_table + " SET " + NoteTableColumns.note_name + " = ?," + NoteTableColumns.note_date + " =?," + NoteTableColumns.note_data + " =? WHERE " + NoteTableColumns.note_id + " =?;";
+        SQLiteDatabase db = getWritableDatabase();
+        SQLiteStatement statement = db.compileStatement(insertQuery);
+        statement.clearBindings();
+        statement.bindString(1, data.getName());
+        statement.bindString(2, data.getDate());
+        statement.bindBlob(3, data.getData());
+        statement.bindString(4, Integer.toString(data.getId()));
+        statement.executeInsert();
+        //db.close();
+    }
+
+    public MyNoteData getNoteDataSmart(int id)
+    {
+        String select = "SELECT * FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_id + " = " + id + " ;";
+        List<List<Object>> results = executeQuerySmart(select);
+        for (List<Object> row : results)
+        {
+            return new MyNoteData(((Integer) row.get(0)).intValue(), (String) row.get(1), (String) row.get(3), (String) row.get(2), ((Integer) row.get(4)).intValue(), byteObjToPrimitives((Byte[]) row.get(5)));
+        }
+        return null;
+    }
+
+    public List<MyNoteData> getNoteListSmart(int classId)
+    {
+        String select = "SELECT * FROM " + Tables.note_table + " WHERE " + NoteTableColumns.note_class_fk + "=" + classId + ";";
+        List<List<Object>> results = executeQuerySmart(select);
+        List<MyNoteData> data = new ArrayList<MyNoteData>();
+        for (List<Object> row : results)
+        {
+            MyNoteData n = new MyNoteData(((Integer) row.get(0)).intValue(), (String) row.get(1), (String) row.get(3), (String) row.get(2), ((Integer) row.get(4)).intValue(), byteObjToPrimitives((Byte[]) row.get(5)));
+            data.add(n);
+        }
+        return data;
+    }
+
+    private byte[] byteObjToPrimitives(Byte[] b)
+    {
+        byte[] out = new byte[b.length];
+        int i = 0;
+        for (Byte by : b)
+        {
+            out[i++] = by;
+        }
+        return out;
+    }
     private enum Tables
     {
         class_table, note_table
@@ -218,6 +297,6 @@ public class MyAppDatabase extends MyDatabase
 
     private enum NoteTableColumns
     {
-        note_id, note_date, note_name, note_type, note_class_fk
+        note_id, note_date, note_name, note_type, note_class_fk, note_data
     }
 }

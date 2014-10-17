@@ -66,4 +66,62 @@ abstract class MyDatabase extends SQLiteOpenHelper {
         c.close();
         return rowsArr;
     }
+
+    public List<List<Object>> executeQuerySmart(String query)
+    {
+        Log.i("database", "query will run:" + query);
+        Cursor c = this.db.rawQuery(query, null);
+        int colCount = c.getColumnCount();
+        List<List<Object>> rowsArr = new ArrayList();
+        if (c.moveToFirst())
+        {
+            do
+            {
+                List<Object> rowDataArr = new ArrayList();
+                for (int i = 0; i < colCount; i++)
+                {
+                    switch (c.getType(i))
+                    {
+                        case Cursor.FIELD_TYPE_BLOB:
+                        {
+
+                            byte[] bytes = c.getBlob(i);
+                            Byte[] byteObjects = new Byte[bytes.length];
+                            int index = 0;
+                            for (byte b : bytes)
+                            {
+                                byteObjects[index++] = b;
+                            }
+                            rowDataArr.add(byteObjects);
+                            break;
+                        }
+                        case Cursor.FIELD_TYPE_FLOAT:
+                        {
+                            rowDataArr.add(Float.valueOf(c.getFloat(i)));
+                            break;
+                        }
+                        case Cursor.FIELD_TYPE_INTEGER:
+                        {
+                            rowDataArr.add(Integer.valueOf(c.getInt(i)));
+                            break;
+                        }
+                        case Cursor.FIELD_TYPE_NULL:
+                        {
+                            rowDataArr.add(c.getString(i));
+                            break;
+                        }
+                        case Cursor.FIELD_TYPE_STRING:
+                        {
+                            rowDataArr.add(c.getString(i));
+                            break;
+                        }
+                    }
+
+                }
+                rowsArr.add(rowDataArr);
+            } while (c.moveToNext());
+        }
+        c.close();
+        return rowsArr;
+    }
 }

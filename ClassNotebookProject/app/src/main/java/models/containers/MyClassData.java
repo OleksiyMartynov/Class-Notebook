@@ -5,7 +5,7 @@ package models.containers;
  */
 public class MyClassData
 {
-    private int id=-1;
+    private int id = -1;
     private String name, proff;
     private String date;
 
@@ -24,21 +24,39 @@ public class MyClassData
         this.date = date;
     }
 
-    public int getId() {
+    public int getId()
+    {
         return id;
     }
 
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
 
-    public String getProff() {
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public String getProff()
+    {
         return proff;
+    }
+
+    public void setProff(String proff)
+    {
+        this.proff = proff;
     }
 
     public String getDate()
     {
         return date;
+    }
+
+    public void setDate(String date)
+    {
+        this.date = date;
     }
 
     @Override

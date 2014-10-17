@@ -23,6 +23,12 @@ import school.com.classnotebook.R;
 public class MyClassDialog extends DialogFragment
 {
     private MyDialogListener mListener;
+    private MyClassData classData;
+
+    public void setClassData(MyClassData data)
+    {
+        this.classData = data;
+    }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState)
@@ -32,7 +38,18 @@ public class MyClassDialog extends DialogFragment
         LayoutInflater inflater = getActivity().getLayoutInflater();
         final View v = inflater.inflate(R.layout.dialog_class_info_layout, null);
         TextView title = (TextView) v.findViewById(R.id.classDialogTitleTextVIew);
-        title.setText("New Class");
+
+        final EditText className = (EditText) v.findViewById(R.id.classDialogClassNameEditText);
+        final EditText classProffName = (EditText) v.findViewById(R.id.classDialogTeacherNameEditText);
+        final DatePicker date = (DatePicker) v.findViewById(R.id.classDialogDatePicker);
+
+        if (classData != null)
+        {
+            title.setText("Edit Class");
+            className.setText(classData.getName());
+            classProffName.setText(classData.getProff());
+        }
+
         builder.setView(v).setPositiveButton("Save", null)
 
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener()
@@ -59,9 +76,7 @@ public class MyClassDialog extends DialogFragment
                     @Override
                     public void onClick(View view)
                     {
-                        EditText className = (EditText) v.findViewById(R.id.classDialogClassNameEditText);
-                        EditText classProffName = (EditText) v.findViewById(R.id.classDialogTeacherNameEditText);
-                        DatePicker date = (DatePicker) v.findViewById(R.id.classDialogDatePicker);
+
                         //TimePicker time = (TimePicker) v.findViewById(R.id.classDialogTimePicker);
                         if (!valid(className.getText().toString(), classProffName.getText().toString()))
                         {
@@ -80,7 +95,16 @@ public class MyClassDialog extends DialogFragment
                         } else
                         {
                             MyAppDatabase classDb = MyAppDatabase.getInstance(getActivity());
-                            classDb.saveClassData(new MyClassData(className.getText().toString(), classProffName.getText().toString(), date.getMonth() + "/" + date.getDayOfMonth() + "/" + date.getYear()));//+ " " + time.getCurrentHour() + ":" + time.getCurrentMinute()
+                            if (classData != null)
+                            {
+                                classData.setName(className.getText().toString());
+                                classData.setProff(classProffName.getText().toString());
+                                classData.setDate(date.getMonth() + "/" + date.getDayOfMonth() + "/" + date.getYear());
+                                classDb.updateClassData(classData);
+                            } else
+                            {
+                                classDb.saveClassData(new MyClassData(className.getText().toString(), classProffName.getText().toString(), date.getMonth() + "/" + date.getDayOfMonth() + "/" + date.getYear()));//+ " " + time.getCurrentHour() + ":" + time.getCurrentMinute()
+                            }
                             if (mListener != null)
                             {
                                 mListener.onPositiveButtonClicked();
@@ -107,16 +131,12 @@ public class MyClassDialog extends DialogFragment
     public void onAttach(Activity activity)
     {
         super.onAttach(activity);
-        // Verify that the host activity implements the callback interface
         try
         {
-            // Instantiate the NoticeDialogListener so we can send events to the host
             mListener = (MyDialogListener) activity;
         } catch (ClassCastException e)
         {
-            // The activity doesn't implement the interface, throw exception
-            throw new ClassCastException(activity.toString()
-                    + " must implement NoticeDialogListener");
+            //throw new ClassCastException(activity.toString() + " must implement NoticeDialogListener");
         }
     }
 }

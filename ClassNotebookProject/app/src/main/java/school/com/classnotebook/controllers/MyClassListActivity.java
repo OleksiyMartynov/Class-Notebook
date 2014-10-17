@@ -29,30 +29,12 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
     private MyClassListAdapter adapter;
     private List<MyClassData> data;
     private List<Integer> selectedItems = new ArrayList<Integer>();
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_class_list);
-
-        //test
-        /*
-        MyAppDatabase classDb = MyAppDatabase.getInstance(this);
-        classDb.saveClassData(new MyClassData("math", "bob", "1/2/2014"));
-        classDb.saveClassData(new MyClassData("english", "john", "1/3/2014"));
-        List<MyClassData> classes = classDb.getClassList();
-        for (MyClassData cd : classes)
-        {
-            Log.i("test", cd.toString());
-        }
-        int fk = 1;
-        classDb.saveNoteData(new MyNoteData(MyNoteData.Type.text.toString(), "calc 1", "1/7/2014", fk));
-        classDb.saveNoteData(new MyNoteData(MyNoteData.Type.text.toString(), "calc 2", "1/12/2014", fk));
-        List<MyNoteData> notes = classDb.getNoteList(fk);
-        for (MyNoteData nd : notes)
-        {
-            Log.i("test", nd.toString());
-        }
-        */
 
         prepareList();
     }
@@ -70,7 +52,6 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
             {
-                Log.i("ClassListActivity", "clicked:" + data.get(i).getName());
                 Intent intent = new Intent(MyClassListActivity.this, MyNoteListActivity.class);
                 intent.putExtra(MyNoteListActivity.CLASS_ID, data.get(i).getId());
                 startActivity(intent);
@@ -81,7 +62,6 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l)
             {
-                Log.i("ClassListActivity", "Long Clicked");
                 if (view.getBackground() != null && ((ColorDrawable) view.getBackground()).getColor() != Color.TRANSPARENT)
                 {
                     view.setBackgroundColor(Color.TRANSPARENT);
@@ -96,15 +76,18 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
         });
         //on data changes call adapter.notifyDataSetChanged();
     }
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.my_class_list, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -113,14 +96,12 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
         {
             case R.id.action_add:
             {
-                Log.i("MyClassListActivity", "add clicked");
                 DialogFragment newFragment = new MyClassDialog();
                 newFragment.show(getSupportFragmentManager(), "new_class");
                 break;
             }
             case R.id.action_delete:
             {
-                Log.i("MyClassListActivity", "delete clicked");
                 if (selectedItems.size() == 0)
                 {
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -157,7 +138,7 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
             }
             case R.id.action_info:
             {
-                Log.i("MyClassListActivity", "info clicked");
+                Log.i("MyClassListActivity", "info clicked");//todo create info activity
                 break;
             }
         }
@@ -165,12 +146,24 @@ public class MyClassListActivity extends ActionBarActivity implements MyDialogLi
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onPositiveButtonClicked()
+    private void refresh()
     {
         data.clear();
         data.addAll(MyAppDatabase.getInstance(this).getClassList());
         adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        refresh();
+    }
+
+    @Override
+    public void onPositiveButtonClicked()
+    {
+        refresh();
     }
 
     @Override

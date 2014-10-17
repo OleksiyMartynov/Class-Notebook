@@ -70,11 +70,15 @@ public class MyNoteDialog extends DialogFragment
                             }
                             case 3:
                             {
-                                MyAppDatabase.getInstance(getActivity()).saveNoteData(new MyNoteData(MyNoteData.Type.drawing.toString(), dateAsString(), "test drawing note", classId));
+                                //MyAppDatabase.getInstance(getActivity()).saveNoteData(new MyNoteData(MyNoteData.Type.drawing.toString(), dateAsString(), "test drawing note", classId));
                                 if (mListener != null)
                                 {
                                     mListener.onPositiveButtonClicked();
                                 }
+                                Intent intent = new Intent(getActivity(), MyNoteActivity.class);
+                                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.drawing.toString());
+                                intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
+                                getActivity().startActivity(intent);
                                 break;
                             }
                         }

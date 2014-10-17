@@ -52,21 +52,6 @@ public class MyClassListAdapter extends ArrayAdapter<MyClassData>
         holder.className.setText(classData.getName());
         holder.classProff.setText(classData.getProff());
         holder.classDate.setText(classData.getDate());
-        /*
-        holder.classView.setTag(classData);
-        holder.classView.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                Object obj =view.getTag();
-                if(obj!=null && obj instanceof MyClassData)
-                {
-                    MyClassData d=(MyClassData)obj;
-                    Log.i("adapter","clicked:"+d.getName());
-                }
-            }
-        });*/
 
         return convertView;
     }

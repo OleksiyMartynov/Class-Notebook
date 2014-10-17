@@ -3,6 +3,9 @@ package school.com.classnotebook.controllers;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +17,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import helpers.MyFileWriter;
 import models.containers.MyNoteData;
 import school.com.classnotebook.R;
 
@@ -78,18 +82,31 @@ public class MyNoteListAdapter extends ArrayAdapter<MyNoteData>
                 public void onClick(View view)
                 {
                     Log.i("NoteAdapter", " share drawing note tapped");
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+
+                    intent.putExtra(Intent.EXTRA_TEXT, noteData.getName());
+
+                    intent.putExtra(Intent.EXTRA_STREAM, MyFileWriter.getUriForImageFileFromBytes(noteData.getData(), "temp_drawing.jpeg"));
+                    intent.setType("image/jpeg");
+                    getContext().startActivity(Intent.createChooser(intent, "Share drawing note"));
                 }
             });
         } else if (noteData.getTypeOfData().equals(MyNoteData.Type.image.toString()))
         {
             holder.noteTypeImage.setImageResource(R.drawable.ic_action_picture_logo);
-            //todo implement sharing for images
             holder.noteShareButton.setOnClickListener(new View.OnClickListener()
             {
                 @Override
                 public void onClick(View view)
                 {
                     Log.i("NoteAdapter", " share image note tapped");
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+
+                    intent.putExtra(Intent.EXTRA_TEXT, noteData.getName());
+
+                    intent.putExtra(Intent.EXTRA_STREAM, MyFileWriter.getUriForImageFileFromBytes(noteData.getData(), "temp_image.jpeg"));
+                    intent.setType("image/jpeg");
+                    getContext().startActivity(Intent.createChooser(intent, "Share image note"));
                 }
             });
         } else if (noteData.getTypeOfData().equals(MyNoteData.Type.text.toString()))
@@ -105,8 +122,8 @@ public class MyNoteListAdapter extends ArrayAdapter<MyNoteData>
                     Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                     sharingIntent.setType("text/plain");
                     sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, noteData.getName());
-                    sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, "texttexttext");//todo get note data
-                    getContext().startActivity(Intent.createChooser(sharingIntent, "Share note"));
+                    sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, new String(noteData.getData()));
+                    getContext().startActivity(Intent.createChooser(sharingIntent, "Share text note"));
                 }
             });
         }
@@ -114,6 +131,11 @@ public class MyNoteListAdapter extends ArrayAdapter<MyNoteData>
         return convertView;
     }
 
+    private Uri getImageUri(byte[] data)
+    {
+        Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
+        return MyFileWriter.saveBitmapToFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getExternalStoragePath(), "temp_image.jpeg"), b);
+    }
     @Override
     public void remove(MyNoteData o)
     {

@@ -16,6 +16,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageView;
 
@@ -27,6 +30,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import helpers.MyFileWriter;
+import helpers.MyScreenCapper;
 import models.containers.MyNoteData;
 import models.database.MyAppDatabase;
 import school.com.classnotebook.R;
@@ -54,7 +59,8 @@ public class MyNoteActivity extends ActionBarActivity
         {
             if (savedInstanceState == null)
             {
-                ((EditText) findViewById(R.id.noteTitleEditText)).setHint("Title");
+                EditText titleText = (EditText) findViewById(R.id.noteTitleEditText);
+                titleText.setHint("Title");
                 Bundle bundle = new Bundle();
                 bundle.putInt(MyTextNoteFragment.CLASS_ID_KEY, classId);
                 if (noteType.equals(MyNoteData.Type.text.toString()))
@@ -72,7 +78,9 @@ public class MyNoteActivity extends ActionBarActivity
                     setFragment(f);
                 } else if (noteType.equals(MyNoteData.Type.drawing.toString()))
                 {
-
+                    setTitle("Drawing Note");
+                    MyDrawingNoteFragment f = new MyDrawingNoteFragment();
+                    setFragment(f);
                 }
             }
         }
@@ -166,9 +174,7 @@ public class MyNoteActivity extends ActionBarActivity
         return df.format(today);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
+
     public static class MyTextNoteFragment extends Fragment implements MyNoteFragmentProtocols
     {
         public static String CLASS_ID_KEY = "class_id_key";
@@ -357,6 +363,96 @@ public class MyNoteActivity extends ActionBarActivity
                 ImageView imgView = (ImageView) rootView.findViewById(R.id.imageNoteImageView);
                 imgView.setImageBitmap(b);
             }
+        }
+    }
+
+    public static class MyDrawingNoteFragment extends Fragment implements MyNoteFragmentProtocols
+    {
+        public static String CLASS_ID_KEY = "class_id_key";
+        private byte[] data;
+        private View rootView;
+        private MyWebViewClient mWVC;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater,
+                                 ViewGroup container, Bundle savedInstanceState)
+        {
+            View thisView = inflater.inflate(R.layout.fragment_web, container, false);
+            WebView webView = (WebView) thisView.findViewById(R.id.drawWebView);
+            webView.clearCache(true);
+            WebSettings webSettings = webView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            webSettings.setAllowFileAccess(true);
+            webSettings.setAllowContentAccess(true);
+
+            mWVC = new MyWebViewClient();
+            rootView = thisView;
+            mWVC.width = rootView.getWidth();
+            mWVC.height = rootView.getHeight();
+            if (data != null)
+            {
+                mWVC.backGroudFilePath = MyFileWriter.getUriForImageFileFromBytes(data, "temp_drawing.jpeg");
+            }
+            webView.setWebViewClient(mWVC);
+            webView.loadUrl("file:///android_asset/htmlPaint.html");
+
+            return thisView;
+        }
+
+        @Override
+        public byte[] getNoteData()
+        {
+            Bitmap b = MyScreenCapper.getBitmapFromView(rootView);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            if (b != null)
+            {
+
+                b.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            } else
+            {
+                Log.w("MyDrawingNoteFragment", "null drawable");
+            }
+            data = stream.toByteArray();
+            return data;
+        }
+
+        @Override
+        public void setNoteData(byte[] data)
+        {
+            this.data = data;
+            if (mWVC != null)
+            {
+                mWVC.backGroudFilePath = MyFileWriter.getUriForImageFileFromBytes(data, "temp_drawing.jpeg");
+            }
+        }
+
+        private class MyWebViewClient extends WebViewClient
+        {
+            int width;
+            int height;
+            Uri backGroudFilePath;
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url)
+            {
+                view.loadUrl(url);
+                return true;
+            }
+
+            public void onPageFinished(WebView view, String url)
+            {
+                // view.loadUrl("javascript:drawPaintCanvasWithSize("+width+","+height+")");
+                if (backGroudFilePath != null)
+                {
+                    Log.i("MyDrawingNoteFragment", "bg:" + backGroudFilePath.toString());
+                    //view.loadUrl("javascript:setBackground('"+ backGroudFilePath.toString() + "')");
+                    view.loadUrl("javascript:drawPaintCanvasWithBackground('" + backGroudFilePath.toString() + "')");
+                } else
+                {
+                    view.loadUrl("javascript:drawPaintCanvas()");
+                }
+            }
+
         }
     }
 }

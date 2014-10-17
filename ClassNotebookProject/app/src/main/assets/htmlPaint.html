@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<style>
+    html, body {
+    margin: 0;
+    height: 100%;
+    }
+</style>
+<head>
+<meta name="viewport"
+      content="width=device-width, minimum-scale=1.0, maximum-scale=2.0, user-scalable=yes"/>
+<script>
+                function setBackground(path)
+                {
+                    document.body.style.backgroundColor = '#000000';
+                    document.body.background =path;
+                    document.body.style.backgroundSize='cover';
+                    console.log('filepath is '+path);
+                }
+                function getWindowSize()
+				{
+					var w=window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+					var h=window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+					return [w,h];
+				}
+				function sleep(milliseconds) {
+                  var start = new Date().getTime();
+                  for (var i = 0; i < 1e7; i++) {
+                    if ((new Date().getTime() - start) > milliseconds){
+                      break;
+                    }
+                  }
+                }
+				function drawPaintCanvas()
+				{
+                    setTimeout(function(){var pCan = new MyPaintCanvas();
+					var size = getWindowSize();
+					console.log(size[0]+':'+size[1]);
+					pCan.initPaintCanvas(size[0],size[1]);}, 200);
+
+				}
+				function drawPaintCanvasWithBackground(path)
+				{
+                    setTimeout(function(){var pCan = new MyPaintCanvas();
+					var size = getWindowSize();
+					console.log(size[0]+':'+size[1]);
+					pCan.initPaintCanvasWithBackground(size[0],size[1],path);}, 200);
+
+				}
+				function drawPaintCanvasWithSize(width, height)
+				{
+					var pCan = new MyPaintCanvas();
+					pCan.initPaintCanvas(width,height);
+				}
+				function MyPaintCanvas()
+				{
+					this.margin=10;
+					this.width;
+					this.height;
+					this.canvas;
+					this.name='paintCanvas';
+					this.mouseIsDown=false;
+					this.previousPoint;
+					this.toolBarHeight;
+					this._this = this;
+					this.lineColor='#000000';
+					this.initPaintCanvas=function(width, height)
+					{		
+						//document.body.style.margin='0px 0px 0px 0px';
+
+							this.toolBarHeight=Math.round(height*0.10);
+							this.width=width-this.margin;
+							this.height=height-this.margin-this.toolBarHeight;
+
+						
+						document.write('<canvas id = "'+this.name+'" width="'+this.width+'px" height="'+this.height+'px">Your browser does not support the HTML5 canvas tag.</canvas>');
+						this.canvas=document.getElementById(this.name);
+						this.canvas.addEventListener('mousedown',this.onMouseStart.bind(this),false);
+						this.canvas.addEventListener('mousemove',this.onMouseMove.bind(this),false);
+						this.canvas.addEventListener('mouseup',this.onMouseUp.bind(this),false);
+						this.canvas.addEventListener('touchstart',this.onTouchStart.bind(this),false);
+						this.canvas.addEventListener('touchmove',this.onTouchMove.bind(this),false);
+						this.canvas.addEventListener('touchend',this.onTouchEnd.bind(this),false);
+						this.createToolBar();
+					}
+					this.initPaintCanvasWithBackground=function(width, height, path)
+					{
+						//document.body.style.margin='0px 0px 0px 0px';
+
+							this.toolBarHeight=Math.round(height*0.10);
+							this.width=width-this.margin;
+							this.height=height-this.margin-this.toolBarHeight;
+
+
+						document.write('<canvas id = "'+this.name+'" width="'+this.width+'px" height="'+this.height+'px">Your browser does not support the HTML5 canvas tag.</canvas>');
+						this.canvas=document.getElementById(this.name);
+						this.canvas.addEventListener('mousedown',this.onMouseStart.bind(this),false);
+						this.canvas.addEventListener('mousemove',this.onMouseMove.bind(this),false);
+						this.canvas.addEventListener('mouseup',this.onMouseUp.bind(this),false);
+						this.canvas.addEventListener('touchstart',this.onTouchStart.bind(this),false);
+						this.canvas.addEventListener('touchmove',this.onTouchMove.bind(this),false);
+						this.canvas.addEventListener('touchend',this.onTouchEnd.bind(this),false);
+                        var imageObj = new Image();
+                        imageObj.onload = function() {
+                            this.drawImage(imageObj,0,0,width,height);
+                          }.bind(this);
+                        imageObj.src=path;
+
+						this.createToolBar();
+					}
+					this.drawImage=function(imgObj,x,y,w,h)
+					{
+                        var c = document.getElementById(this.name);
+						var ctx = c.getContext("2d");
+						ctx.drawImage(imgObj,x,y,w,h);
+					}
+					this.createToolBar=function()
+					{
+						var size = [Math.round((this.width/7)-4),Math.round(this.toolBarHeight)];
+						this.createButton(' ',function(){this.lineColor='#000000';}.bind(this),'#000000',size);
+						this.createButton(' ',function(){this.lineColor='#33CC33';}.bind(this),'#33CC33',size);
+						this.createButton(' ',function(){this.lineColor='#E6E600';}.bind(this),'#E6E600',size);
+						this.createButton(' ',function(){this.lineColor='#FF9933';}.bind(this),'#FF9933',size);
+						this.createButton(' ',function(){this.lineColor='#FF0000';}.bind(this),'#FF0000',size);
+						this.createButton(' ',function(){this.lineColor='#FFFFFF';}.bind(this),'#FFFFFF',size);
+						this.createButton('CLR',function(){this.clearCanvas();}.bind(this),null,size);
+					}
+					this.createButton=function(value,onClickFunc,bgCol,size)
+					{
+						var btn = document.createElement('INPUT');
+						btn.type='button';
+						btn.value=value;
+						btn.onclick=onClickFunc;
+						if(size!=null)
+						{
+							btn.style.width=size[0];
+							btn.style.height=size[1];
+						}
+						if(bgCol!=null){btn.style.backgroundColor=bgCol;}
+						document.body.appendChild(btn);
+					}
+					this.recordPoint=function(p)
+					{
+						var x = p[0];
+						var y = p[1];
+						var lineWidth = Math.floor(this.height/100);
+						if(this.previousPoint!=undefined)
+						{
+							this.drawLine(this.previousPoint[0],this.previousPoint[1],x,y,lineWidth,this.lineColor);
+						}
+						this.previousPoint=[x,y];
+					}
+					this.onTouchStart=function(e)
+					{
+						e.preventDefault();
+						var x =e.targetTouches[0].pageX;
+						var y =e.targetTouches[0].pageY;
+						var data = [x,y];
+					    this.previousPoint=[x,y];
+						this.recordPoint(data);
+					}
+					this.onTouchMove=function(e)
+					{
+						e.preventDefault();
+						var x =e.targetTouches[0].pageX;
+						var y =e.targetTouches[0].pageY;
+						var data = [x,y];							
+						this.recordPoint(data);	
+					}
+					this.onTouchEnd=function(e)
+					{
+						e.preventDefault();
+						var x =e.targetTouches[0].pageX;
+						var y =e.targetTouches[0].pageY;
+						var data = [x,y];
+						this.recordPoint(data);
+						this.previousPoint = null; 
+					}
+					this.onMouseStart=function(e)
+					{						
+						this.mouseIsDown=true;
+						e.preventDefault();
+						var x =e.pageX;
+						var y =e.pageY;
+						var data = [x,y];
+					    this.previousPoint=[x,y];
+						this.recordPoint(data);
+					}
+					this.onMouseMove=function(e)
+					{
+						if(this.mouseIsDown==true)
+						{
+							e.preventDefault();
+							var x =e.pageX;
+							var y =e.pageY;
+							
+							var data = [x,y];							
+							this.recordPoint(data);							
+						}
+					}
+					this.onMouseUp=function(e)
+					{
+						e.preventDefault();
+						var x =e.pageX;
+						var y =e.pageY;
+						this.mouseIsDown=false;
+						var data = [x,y];
+						this.recordPoint(data);
+						this.previousPoint = null; 
+					}				
+					
+					this.drawLine = function(startX,startY,endX,endY,lineWidth,color)
+					{
+						var c = document.getElementById(this.name);
+						var ctx = c.getContext("2d");
+						ctx.save();
+						ctx.beginPath();
+						ctx.strokeStyle=color;
+						ctx.lineWidth=lineWidth;						
+						ctx.moveTo(startX,startY);
+						ctx.lineTo(endX,endY);
+						ctx.stroke();						
+						//ctx.fill();
+						ctx.restore();
+					}
+					this.clearCanvas=function()
+					{	
+						var c = document.getElementById(this.name);
+						var ctx = c.getContext("2d");
+						ctx.clearRect(0,0,this.width,this.height);
+					}
+
+				}
+
+
+</script>
+</head>
+<body>
+</body>
+</html>

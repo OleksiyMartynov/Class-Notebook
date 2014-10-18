@@ -11,6 +11,7 @@ import android.widget.ScrollView;
  */
 public class MyScreenCapper
 {
+
     static public Bitmap getBitmapFromView(View view)
     {
         Bitmap bitmap;

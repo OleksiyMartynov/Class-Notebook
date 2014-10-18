@@ -32,12 +32,7 @@
         <activity
             android:name=".controllers.MyNoteActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_my_note"
-            android:parentActivityName=".controllers.MyNoteListActivity">
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".controllers.MyNoteListActivity"/>
+            android:label="@string/title_activity_my_note">
         </activity>
     </application>
 

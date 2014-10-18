@@ -369,6 +369,7 @@ public class MyNoteActivity extends ActionBarActivity
     public static class MyDrawingNoteFragment extends Fragment implements MyNoteFragmentProtocols
     {
         public static String CLASS_ID_KEY = "class_id_key";
+        WebView webView;
         private byte[] data;
         private View rootView;
         private MyWebViewClient mWVC;
@@ -378,7 +379,7 @@ public class MyNoteActivity extends ActionBarActivity
                                  ViewGroup container, Bundle savedInstanceState)
         {
             View thisView = inflater.inflate(R.layout.fragment_web, container, false);
-            WebView webView = (WebView) thisView.findViewById(R.id.drawWebView);
+            webView = (WebView) thisView.findViewById(R.id.drawWebView);
             webView.clearCache(true);
             WebSettings webSettings = webView.getSettings();
             webSettings.setJavaScriptEnabled(true);
@@ -402,7 +403,10 @@ public class MyNoteActivity extends ActionBarActivity
         @Override
         public byte[] getNoteData()
         {
-            Bitmap b = MyScreenCapper.getBitmapFromView(rootView);
+            Log.i("MyDrawingNoteFragment", "getNoteData() called");
+
+
+            Bitmap b = MyScreenCapper.getBitmapFromView(webView);
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             if (b != null)
             {

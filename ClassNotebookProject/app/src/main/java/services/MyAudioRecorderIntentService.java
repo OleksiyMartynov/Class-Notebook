@@ -5,11 +5,17 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaRecorder;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import helpers.MyFileReader;
 import school.com.classnotebook.R;
@@ -29,6 +35,7 @@ public class MyAudioRecorderIntentService extends Service
     private static MyAudioRecorderIntentServiceFeedbackListener listener;
     private static MediaRecorder recorder;
     private static String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audiorecord.3gp";
+    private static SpeechRecognizer sr;
 
     public static void setListener(MyAudioRecorderIntentServiceFeedbackListener listener)
     {
@@ -108,11 +115,92 @@ public class MyAudioRecorderIntentService extends Service
         stopForeground(true);
     }
 
+    private void startVoiceRecognition()
+    {
+        boolean available = SpeechRecognizer.isRecognitionAvailable(this);
+        if (available)
+        {
+            sr = SpeechRecognizer.createSpeechRecognizer(this);
+            sr.setRecognitionListener(new RecognitionListener()
+            {
+                @Override
+                public void onReadyForSpeech(Bundle bundle)
+                {
+
+                }
+
+                @Override
+                public void onBeginningOfSpeech()
+                {
+
+                }
+
+                @Override
+                public void onRmsChanged(float v)
+                {
+
+                }
+
+                @Override
+                public void onBufferReceived(byte[] bytes)
+                {
+
+                }
+
+                @Override
+                public void onEndOfSpeech()
+                {
+
+                }
+
+                @Override
+                public void onError(int i)
+                {
+
+                }
+
+                @Override
+                public void onResults(Bundle results)
+                {
+                    ArrayList<String> resultList = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    Log.i("MyAudioRecordingService", "Voice Recognition results:");
+                    for (String str : resultList)
+                    {
+                        Log.i("MyAudioRecordingService", str);
+                    }
+                    //todo store results
+                }
+
+                @Override
+                public void onPartialResults(Bundle bundle)
+                {
+
+                }
+
+                @Override
+                public void onEvent(int i, Bundle bundle)
+                {
+
+                }
+            });
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getApplicationContext().getPackageName());
+            sr.startListening(intent);
+        } else
+        {
+            Log.i("MyAudioRecordingService", "voice recognition not available");
+        }
+    }
+
+    private void stopVoiceRecognition()
+    {
+        sr.stopListening();
+    }
     private void handleActionStart()
     {
         if (state == MyRecorderState.stoped)
         {
-
+            startVoiceRecognition();
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -140,6 +228,7 @@ public class MyAudioRecorderIntentService extends Service
     {
         if (state == MyRecorderState.recording)
         {
+            stopVoiceRecognition();
             recorder.stop();
             recorder.release();
             recorder = null;
@@ -167,6 +256,7 @@ public class MyAudioRecorderIntentService extends Service
     {
         if (state == MyRecorderState.recording)
         {
+            stopVoiceRecognition();
             recorder.stop();
             recorder.reset();
             recorder.release();

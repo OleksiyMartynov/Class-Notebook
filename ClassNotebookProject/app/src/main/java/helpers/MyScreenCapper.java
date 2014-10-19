@@ -1,16 +1,32 @@
 package helpers;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.ListView;
 import android.widget.ScrollView;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by Oleksiy on 5/13/2014.
  */
 public class MyScreenCapper
 {
+    static public byte[] bitmapToByteArr(Bitmap b)
+    {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        if (b != null)
+        {
+
+            b.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        } else
+        {
+            Log.w("MyScreenCapper", "null drawable");
+        }
+        return stream.toByteArray();
+    }
 
     static public Bitmap getBitmapFromView(View view)
     {

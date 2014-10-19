@@ -13,7 +13,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 import models.containers.MyNoteData;
-import models.database.MyAppDatabase;
 
 /**
  * Created by Oleksiy on 10/16/2014.
@@ -32,53 +31,30 @@ public class MyNoteDialog extends DialogFragment
                 {
                     public void onClick(DialogInterface dialog, int which)
                     {
+                        if (mListener != null)
+                        {
+                            mListener.onPositiveButtonClicked();
+                        }
                         switch (which)
                         {
                             case 0:
                             {
-
-                                if (mListener != null)
-                                {
-                                    mListener.onPositiveButtonClicked();
-                                }
-                                Intent intent = new Intent(getActivity(), MyNoteActivity.class);
-                                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.text.toString());
-                                intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
-                                getActivity().startActivity(intent);
+                                startNoteActivity(MyNoteData.Type.text.toString());
                                 break;
                             }
                             case 1:
                             {
-                                MyAppDatabase.getInstance(getActivity()).saveNoteData(new MyNoteData(MyNoteData.Type.audio.toString(), dateAsString(), "test audio note", classId));
-                                if (mListener != null)
-                                {
-                                    mListener.onPositiveButtonClicked();
-                                }
+                                startNoteActivity(MyNoteData.Type.audio.toString());
                                 break;
                             }
                             case 2:
                             {
-                                if (mListener != null)
-                                {
-                                    mListener.onPositiveButtonClicked();
-                                }
-                                Intent intent = new Intent(getActivity(), MyNoteActivity.class);
-                                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.image.toString());
-                                intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
-                                getActivity().startActivity(intent);
+                                startNoteActivity(MyNoteData.Type.image.toString());
                                 break;
                             }
                             case 3:
                             {
-                                //MyAppDatabase.getInstance(getActivity()).saveNoteData(new MyNoteData(MyNoteData.Type.drawing.toString(), dateAsString(), "test drawing note", classId));
-                                if (mListener != null)
-                                {
-                                    mListener.onPositiveButtonClicked();
-                                }
-                                Intent intent = new Intent(getActivity(), MyNoteActivity.class);
-                                intent.putExtra(MyNoteActivity.NOTE_TYPE, MyNoteData.Type.drawing.toString());
-                                intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
-                                getActivity().startActivity(intent);
+                                startNoteActivity(MyNoteData.Type.drawing.toString());
                                 break;
                             }
                         }
@@ -87,6 +63,13 @@ public class MyNoteDialog extends DialogFragment
         return builder.create();
     }
 
+    private void startNoteActivity(String type)
+    {
+        Intent intent = new Intent(getActivity(), MyNoteActivity.class);
+        intent.putExtra(MyNoteActivity.NOTE_TYPE, type);
+        intent.putExtra(MyNoteActivity.CLASS_ID, getClassId());
+        getActivity().startActivity(intent);
+    }
     public void setListener(MyDialogListener listener)
     {
         mListener = listener;

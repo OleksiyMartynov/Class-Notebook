@@ -1,0 +1,75 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              tools:context="school.com.classnotebook.controllers.MyPaintNoteFragment"
+    >
+
+    <school.com.classnotebook.controllers.custom.MyPaintView
+        android:id="@+id/paintView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="7"
+        android:background="#ff0b8203"
+        android:orientation="horizontal"
+        android:padding="2dp">
+
+        <Button
+            android:id="@+id/blackBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:background="#ff000000"/>
+
+        <Button
+            android:id="@+id/redBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:background="#ffeb0900"/>
+
+        <Button
+            android:id="@+id/greenBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:background="#ff0ceb00"/>
+
+        <Button
+            android:id="@+id/blueBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:background="#ff003beb"/>
+
+        <Button
+            android:id="@+id/whiteBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:background="#ffffffff"/>
+
+        <Button
+            android:id="@+id/clearBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:text="CLR"
+            android:textColor="#ffe7ebe3"
+            android:textSize="12dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -6,8 +6,9 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true"/>
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
     <application
         android:allowBackup="true"
@@ -26,14 +27,17 @@
         <activity
             android:name=".controllers.MyNoteListActivity"
             android:label="@string/title_activity_note_list">
-
-
         </activity>
         <activity
             android:name=".controllers.MyNoteActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_my_note">
         </activity>
+
+        <service
+            android:name="services.MyAudioRecorderIntentService"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>

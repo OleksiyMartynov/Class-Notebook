@@ -46,11 +46,30 @@ public class MyFileWriter
         }
     }
 
+    public static Uri getUriForImageFileFromBytesPrivate(Context c, byte[] data)
+    {
+        return getUriForImageFileFromBytesPrivate(c, data, "temp.jpeg");
+    }
+
+    public static Uri getUriForImageFileFromBytesPrivate(Context c, byte[] data, String name)
+    {
+        Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
+        Uri uri = MyFileWriter.saveBitmapToFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getInternalStoragePath(c), name), b);
+        Log.i("FileWriter", "size:" + data.length + " private uri request for:" + uri.toString());
+        return uri;
+    }
+
     public static Uri getUriForImageFileFromBytes(byte[] data, String name)
     {
         Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
         Uri uri = MyFileWriter.saveBitmapToFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getExternalStoragePath(), name), b);
         Log.i("FileWriter", "size:" + data.length + " uri request for:" + uri.toString());
+        return uri;
+    }
+
+    public static Uri getUriForImageFile(Bitmap b, String name)
+    {
+        Uri uri = MyFileWriter.saveBitmapToFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getExternalStoragePath(), name), b);
         return uri;
     }
 
@@ -63,5 +82,10 @@ public class MyFileWriter
     public static String saveBitmapToMedia(Bitmap bmp, Context c, String name)
     {
         return MediaStore.Images.Media.insertImage(c.getContentResolver(), bmp, name, null);
+    }
+
+    public static Bitmap bitmapFromByteArra(byte[] data)
+    {
+        return BitmapFactory.decodeByteArray(data, 0, data.length);
     }
 }

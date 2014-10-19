@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MyPaintView">
+        <attr name="brush_color" format="color"/>
+        <attr name="brush_size" format="integer"/>
+    </declare-styleable>
+</resources>

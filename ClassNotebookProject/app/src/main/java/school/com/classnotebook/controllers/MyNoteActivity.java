@@ -1,9 +1,11 @@
 package school.com.classnotebook.controllers;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,10 +22,12 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -35,6 +39,7 @@ import helpers.MyScreenCapper;
 import models.containers.MyNoteData;
 import models.database.MyAppDatabase;
 import school.com.classnotebook.R;
+import services.MyAudioRecorderIntentService;
 
 
 public class MyNoteActivity extends ActionBarActivity
@@ -45,6 +50,7 @@ public class MyNoteActivity extends ActionBarActivity
     private int classId, noteId;
     private String noteType;
     private MyNoteFragmentProtocols mainFragment;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -61,26 +67,23 @@ public class MyNoteActivity extends ActionBarActivity
             {
                 EditText titleText = (EditText) findViewById(R.id.noteTitleEditText);
                 titleText.setHint("Title");
-                Bundle bundle = new Bundle();
-                bundle.putInt(MyTextNoteFragment.CLASS_ID_KEY, classId);
                 if (noteType.equals(MyNoteData.Type.text.toString()))
                 {
                     setTitle("Text Note");
-                    MyTextNoteFragment f = new MyTextNoteFragment();
-                    setFragment(f);
+                    setFragment(new MyTextNoteFragment());
                 } else if (noteType.equals(MyNoteData.Type.audio.toString()))
                 {
+                    setTitle("Audio Note");
 
+                    setFragment(new MyAudioNoteFragment());
                 } else if (noteType.equals(MyNoteData.Type.image.toString()))
                 {
                     setTitle("Picture note");
-                    MyPictureNoteFragment f = new MyPictureNoteFragment();
-                    setFragment(f);
+                    setFragment(new MyPictureNoteFragment());
                 } else if (noteType.equals(MyNoteData.Type.drawing.toString()))
                 {
                     setTitle("Drawing Note");
-                    MyDrawingNoteFragment f = new MyDrawingNoteFragment();
-                    setFragment(f);
+                    setFragment(new MyPaintNoteFragment());
                 }
             }
         }
@@ -112,8 +115,14 @@ public class MyNoteActivity extends ActionBarActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.my_note, menu);
+        if (noteType.equals(MyNoteData.Type.audio.toString()))
+        {
+            MenuItem save = menu.findItem(R.id.action_save_note);
+            save.setVisible(false);
+            MenuItem cancel = menu.findItem(R.id.action_cancel_note);
+            cancel.setVisible(false);
+        }
         return true;
     }
 
@@ -177,7 +186,6 @@ public class MyNoteActivity extends ActionBarActivity
 
     public static class MyTextNoteFragment extends Fragment implements MyNoteFragmentProtocols
     {
-        public static String CLASS_ID_KEY = "class_id_key";
         private byte[] data;
         private View rootView;
 
@@ -218,7 +226,6 @@ public class MyNoteActivity extends ActionBarActivity
     public static class MyPictureNoteFragment extends Fragment implements MyNoteFragmentProtocols
     {
         private static final int CAMERA_REQUEST = 3333;
-        public static String CLASS_ID_KEY = "class_id_key";
         private byte[] data;
         private View rootView;
         private String mCurrentPhotoPath;
@@ -340,16 +347,7 @@ public class MyNoteActivity extends ActionBarActivity
         {
             ImageView imgView = (ImageView) rootView.findViewById(R.id.imageNoteImageView);
             Bitmap b = ((BitmapDrawable) imgView.getDrawable()).getBitmap();
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            if (b != null)
-            {
-
-                b.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-            } else
-            {
-                Log.w("MyPictureNoteFragment", "null drawable");
-            }
-            byte[] bitmapdata = stream.toByteArray();
+            byte[] bitmapdata = MyScreenCapper.bitmapToByteArr(b);
             return bitmapdata;
         }
 
@@ -359,9 +357,8 @@ public class MyNoteActivity extends ActionBarActivity
             this.data = data;
             if (rootView != null)
             {
-                Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
                 ImageView imgView = (ImageView) rootView.findViewById(R.id.imageNoteImageView);
-                imgView.setImageBitmap(b);
+                imgView.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
             }
         }
     }
@@ -457,6 +454,135 @@ public class MyNoteActivity extends ActionBarActivity
                 }
             }
 
+        }
+    }
+
+    public static class MyAudioNoteFragment extends Fragment implements MyNoteFragmentProtocols, MyAudioRecorderIntentService.MyAudioRecorderIntentServiceFeedbackListener
+    {
+        private byte[] data;
+        private View rootView;
+        private MediaPlayer player;
+
+        public MyAudioNoteFragment()
+        {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState)
+        {
+            rootView = inflater.inflate(R.layout.fragment_my_audio_note, container, false);
+            if (data != null) // only need to play data
+            {
+                rootView.findViewById(R.id.audioRecordLayour).setVisibility(View.GONE);
+                player = new MediaPlayer();
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audiorecord.3gp";
+                try
+                {
+                    //todo wrap in loading bar
+                    FileOutputStream fos = getActivity().openFileOutput(path, Context.MODE_PRIVATE);
+                    fos.write(data);
+                    fos.close();
+                    player.setDataSource(path);
+                } catch (Exception e)
+                {
+                    Log.w("MyAudioFragment", e.getMessage());
+                }
+            } else //only need to record audio
+            {
+
+                rootView.findViewById(R.id.audioSliderLayout).setVisibility(View.GONE);
+                rootView.findViewById(R.id.audioMainLayout).setVisibility(View.GONE);
+                if (MyAudioRecorderIntentService.getState() == MyAudioRecorderIntentService.MyRecorderState.recording)
+                {
+                    showRecordingControls();
+                } else
+                {
+                    ImageButton recordButton = (ImageButton) rootView.findViewById(R.id.audioRecordImageButton);
+                    recordButton.setOnClickListener(new View.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(View view)
+                        {
+                            MyAudioRecorderIntentService.startRecording(getActivity().getBaseContext(), MyAudioNoteFragment.this);
+                            showRecordingControls();
+                        }
+                    });
+                }
+            }
+            return rootView;
+        }
+
+        private void showRecordingControls()
+        {
+
+            rootView.findViewById(R.id.audioRecordLayour).setVisibility(View.GONE);
+            rootView.findViewById(R.id.audioPauseButton).setVisibility(View.GONE);//cant pause audio recorder
+            rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
+            ImageButton stopButton = (ImageButton) rootView.findViewById(R.id.audioStopButton);
+            stopButton.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+
+                    MyAudioRecorderIntentService.stopRecording(getActivity().getBaseContext());
+                }
+            });
+            ImageButton cancelButton = (ImageButton) rootView.findViewById(R.id.audioCancelButton);
+            cancelButton.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    MyAudioRecorderIntentService.cancelRecording(getActivity().getBaseContext());
+                }
+            });
+        }
+
+        @Override
+        public void onPause()
+        {
+            super.onPause();
+            MyAudioRecorderIntentService.setListener(null);
+        }
+
+        @Override
+        public void onResume()
+        {
+            super.onResume();
+            MyAudioRecorderIntentService.setListener(this);
+        }
+
+        @Override
+        public byte[] getNoteData()
+        {
+            return data;
+        }
+
+        @Override
+        public void setNoteData(byte[] data)
+        {
+            this.data = data;
+        }
+
+        @Override
+        public void onTick(int timeSeconds)
+        {
+
+        }
+
+        @Override
+        public void onFinishedRecording(byte[] data)
+        {
+            this.data = data;
+            Log.i("MyAudioFragment", "got data with size:" + data.length);
+        }
+
+        @Override
+        public void onStateChange(MyAudioRecorderIntentService.MyRecorderState state)
+        {
+            Log.i("MyAudioFragment", "status update:" + state);
         }
     }
 }

@@ -18,12 +18,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,11 +58,23 @@ public class MyNoteActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_my_note);
+
+        //test bundle contents
+        Log.i("MyNoteActivity", "bundle size:" + getIntent().getExtras().size());
+
 
         classId = getIntent().getIntExtra(MyNoteActivity.CLASS_ID, -1);
         noteType = getIntent().getStringExtra(MyNoteActivity.NOTE_TYPE);
         noteId = getIntent().getIntExtra(MyNoteActivity.NOTE_ID, -1);
+        if (getIntent().getExtras() != null)
+        {
+            Bundle b = getIntent().getExtras();
+            classId = b.getInt(MyNoteActivity.CLASS_ID, -1);
+            noteType = b.getString(MyNoteActivity.NOTE_TYPE);
+            noteId = b.getInt(MyNoteActivity.NOTE_ID, -1);
+        }
         if (classId != -1 && noteType != null)
         {
             if (savedInstanceState == null)
@@ -74,8 +88,9 @@ public class MyNoteActivity extends ActionBarActivity
                 } else if (noteType.equals(MyNoteData.Type.audio.toString()))
                 {
                     setTitle("Audio Note");
-
-                    setFragment(new MyAudioNoteFragment());
+                    MyAudioNoteFragment f = new MyAudioNoteFragment();
+                    f.setArguments(getIntent().getExtras());
+                    setFragment(f);
                 } else if (noteType.equals(MyNoteData.Type.image.toString()))
                 {
                     setTitle("Picture note");
@@ -88,7 +103,6 @@ public class MyNoteActivity extends ActionBarActivity
             }
         }
     }
-
     private void setFragment(Fragment f)
     {
         if (noteId != -1)
@@ -120,8 +134,11 @@ public class MyNoteActivity extends ActionBarActivity
         {
             MenuItem save = menu.findItem(R.id.action_save_note);
             save.setVisible(false);
-            MenuItem cancel = menu.findItem(R.id.action_cancel_note);
-            cancel.setVisible(false);
+            if (noteId == -1)
+            {
+                MenuItem cancel = menu.findItem(R.id.action_cancel_note);
+                cancel.setVisible(false);
+            }
         }
         return true;
     }
@@ -140,26 +157,34 @@ public class MyNoteActivity extends ActionBarActivity
                 Log.i("!!!!", "here");
                 if (mainFragment != null)
                 {
-                    Log.i("!!!!", "here1");
-                    String noteName;
-                    if (((EditText) findViewById(R.id.noteTitleEditText)).getText().toString() == null || ((EditText) findViewById(R.id.noteTitleEditText)).getText().toString().isEmpty())
-                    {
-                        noteName = noteType + " note";
-                    } else
-                    {
-                        noteName = ((EditText) findViewById(R.id.noteTitleEditText)).getText().toString();
-                    }
+                    setProgressBarIndeterminateVisibility(true);
                     if (noteId == -1) //new note
                     {
-                        MyAppDatabase.getInstance(this).saveNoteDataSmart(new MyNoteData(noteType, dateAsString(), noteName, classId, mainFragment.getNoteData()));
-                        Log.i("!!!!", "here2");
+                        mainFragment.getNoteData(new MyNoteFragmentProtocols.MyNoteFragmentDataCallBack()
+                        {
+                            @Override
+                            public void onDataReady(byte[] data)
+                            {
+                                MyAppDatabase.getInstance(MyNoteActivity.this).saveNoteDataSmart(new MyNoteData(noteType, dateAsString(), getNoteNameSmart(), classId, data));
+                                setProgressBarIndeterminateVisibility(false);
+                                finish();
+                            }
+                        });
                     } else //editing existing
                     {
-                        MyAppDatabase.getInstance(this).updateNoteDataSmart(new MyNoteData(noteId, noteType, dateAsString(), noteName, classId, mainFragment.getNoteData()));
-                        Log.i("!!!!", "here3");
+                        mainFragment.getNoteData(new MyNoteFragmentProtocols.MyNoteFragmentDataCallBack()
+                        {
+                            @Override
+                            public void onDataReady(byte[] data)
+                            {
+                                MyAppDatabase.getInstance(MyNoteActivity.this).updateNoteDataSmart(new MyNoteData(noteId, noteType, dateAsString(), getNoteNameSmart(), classId, data));
+                                setProgressBarIndeterminateVisibility(false);
+                                finish();
+                            }
+                        });
                     }
                 }
-                finish();
+
                 break;
             }
             case R.id.action_cancel_note:
@@ -176,6 +201,18 @@ public class MyNoteActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private String getNoteNameSmart()
+    {
+        String noteName;
+        if (((EditText) findViewById(R.id.noteTitleEditText)).getText().toString() == null || ((EditText) findViewById(R.id.noteTitleEditText)).getText().toString().isEmpty())
+        {
+            noteName = noteType + " note";
+        } else
+        {
+            noteName = ((EditText) findViewById(R.id.noteTitleEditText)).getText().toString();
+        }
+        return noteName;
+    }
     private String dateAsString()
     {
         DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm");
@@ -207,9 +244,9 @@ public class MyNoteActivity extends ActionBarActivity
         }
 
         @Override
-        public byte[] getNoteData()
+        public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
-            return ((EditText) rootView.findViewById(R.id.textNoteEditText)).getText().toString().getBytes();
+            callBack.onDataReady(((EditText) rootView.findViewById(R.id.textNoteEditText)).getText().toString().getBytes());
         }
 
         @Override
@@ -319,7 +356,9 @@ public class MyNoteActivity extends ActionBarActivity
                 @Override
                 public void onFocusChange(View view, boolean b)
                 {
-                    data = getNoteData();
+                    ImageView imgView = (ImageView) rootView.findViewById(R.id.imageNoteImageView);
+                    Bitmap bmp = ((BitmapDrawable) imgView.getDrawable()).getBitmap();
+                    data = MyScreenCapper.bitmapToByteArr(bmp);
                 }
             });
             mImageView.setImageBitmap(bitmap);
@@ -343,12 +382,13 @@ public class MyNoteActivity extends ActionBarActivity
         }
 
         @Override
-        public byte[] getNoteData()
+        public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
             ImageView imgView = (ImageView) rootView.findViewById(R.id.imageNoteImageView);
             Bitmap b = ((BitmapDrawable) imgView.getDrawable()).getBitmap();
             byte[] bitmapdata = MyScreenCapper.bitmapToByteArr(b);
-            return bitmapdata;
+            //set this.data variable not needed???
+            callBack.onDataReady(bitmapdata);
         }
 
         @Override
@@ -398,7 +438,7 @@ public class MyNoteActivity extends ActionBarActivity
         }
 
         @Override
-        public byte[] getNoteData()
+        public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
             Log.i("MyDrawingNoteFragment", "getNoteData() called");
 
@@ -414,7 +454,7 @@ public class MyNoteActivity extends ActionBarActivity
                 Log.w("MyDrawingNoteFragment", "null drawable");
             }
             data = stream.toByteArray();
-            return data;
+            callBack.onDataReady(data);
         }
 
         @Override
@@ -468,8 +508,7 @@ public class MyNoteActivity extends ActionBarActivity
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState)
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             rootView = inflater.inflate(R.layout.fragment_my_audio_note, container, false);
             if (data != null) // only need to play data
@@ -493,19 +532,20 @@ public class MyNoteActivity extends ActionBarActivity
 
                 rootView.findViewById(R.id.audioSliderLayout).setVisibility(View.GONE);
                 rootView.findViewById(R.id.audioMainLayout).setVisibility(View.GONE);
+                ImageButton recordButton = (ImageButton) rootView.findViewById(R.id.audioRecordImageButton);
                 if (MyAudioRecorderIntentService.getState() == MyAudioRecorderIntentService.MyRecorderState.recording)
                 {
                     showRecordingControls();
                 } else
                 {
-                    ImageButton recordButton = (ImageButton) rootView.findViewById(R.id.audioRecordImageButton);
                     recordButton.setOnClickListener(new View.OnClickListener()
                     {
                         @Override
                         public void onClick(View view)
                         {
-                            MyAudioRecorderIntentService.startRecording(getActivity().getBaseContext(), MyAudioNoteFragment.this);
                             showRecordingControls();
+                            MyAudioRecorderIntentService.startRecording(getActivity().getBaseContext(), MyAudioNoteFragment.this, getArguments());
+
                         }
                     });
                 }
@@ -536,10 +576,17 @@ public class MyNoteActivity extends ActionBarActivity
                 public void onClick(View view)
                 {
                     MyAudioRecorderIntentService.cancelRecording(getActivity().getBaseContext());
+                    getActivity().finish();
                 }
             });
         }
 
+        private void showPlayBackControls()
+        {
+            rootView.findViewById(R.id.audioSliderLayout).setVisibility(View.VISIBLE);
+            rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
+            rootView.findViewById(R.id.audioPauseButton).setVisibility(View.VISIBLE);
+        }
         @Override
         public void onPause()
         {
@@ -551,13 +598,18 @@ public class MyNoteActivity extends ActionBarActivity
         public void onResume()
         {
             super.onResume();
+            Log.i("MyAudioNoteFragment", "On resume called. Service state:" + MyAudioRecorderIntentService.getState());
             MyAudioRecorderIntentService.setListener(this);
+            if (data != null && MyAudioRecorderIntentService.getState().equals(MyAudioRecorderIntentService.MyRecorderState.stoped))
+            {
+                showPlayBackControls();
+            }
         }
 
         @Override
-        public byte[] getNoteData()
+        public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
-            return data;
+            callBack.onDataReady(data);
         }
 
         @Override
@@ -569,7 +621,18 @@ public class MyNoteActivity extends ActionBarActivity
         @Override
         public void onTick(int timeSeconds)
         {
-
+            try //sometimes service starts before view is made visible
+            {
+                TextView secTextView = (TextView) rootView.findViewById(R.id.audioSecondsTextView);
+                TextView minTextView = (TextView) rootView.findViewById(R.id.audioMinutesTextView);
+                TextView hrTextView = (TextView) rootView.findViewById(R.id.audioHoursTextView);
+                secTextView.setText("" + (timeSeconds % 60));
+                minTextView.setText("" + ((timeSeconds / 60) == 0 ? "00" : (timeSeconds / 60)));
+                hrTextView.setText("" + ((timeSeconds / 60 / 60) == 0 ? "00" : (timeSeconds / 60 / 60)));
+            } catch (Exception e)
+            {
+                Log.i("MyAudioFragment", "missing layout");
+            }
         }
 
         @Override
@@ -577,6 +640,7 @@ public class MyNoteActivity extends ActionBarActivity
         {
             this.data = data;
             Log.i("MyAudioFragment", "got data with size:" + data.length);
+            getActivity().finish();
         }
 
         @Override

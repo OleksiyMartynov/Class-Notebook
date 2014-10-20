@@ -1,5 +1,8 @@
 package services;
 
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -8,11 +11,13 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,19 +36,25 @@ public class MyAudioRecorderIntentService extends Service
     public static final String ACTION_STOP_RECORDING = "stop_recording";
     public static final String ACTION_CANCEL_RECORDING = "cancel_recording";
     private static final int ONGOING_NOTIFICATION_ID = 333;
+    private static final int ALARM_ID = 123;
+    private static final String ACTION_TICK = "tick_event";
     private static MyRecorderState state = MyRecorderState.stoped;
     private static MyAudioRecorderIntentServiceFeedbackListener listener;
     private static MediaRecorder recorder;
     private static String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audiorecord.3gp";
     private static SpeechRecognizer sr;
-
+    private static NotificationCompat.Builder notiBuilder;
+    private static Bundle activityCallbackBundle;
+    private static int seconds = 0;
+    private static PendingIntent alarmIntent;
     public static void setListener(MyAudioRecorderIntentServiceFeedbackListener listener)
     {
         MyAudioRecorderIntentService.listener = listener;
     }
 
-    public static void startRecording(Context context, MyAudioRecorderIntentServiceFeedbackListener listener)
+    public static void startRecording(Context context, MyAudioRecorderIntentServiceFeedbackListener listener, Bundle b)
     {
+        activityCallbackBundle = b;
         MyAudioRecorderIntentService.listener = listener;
         Intent intent = new Intent(context, MyAudioRecorderIntentService.class);
         intent.setAction(ACTION_START_RECORDING);
@@ -83,33 +94,100 @@ public class MyAudioRecorderIntentService extends Service
             final String action = intent.getAction();
             if (ACTION_START_RECORDING.equals(action))
             {
+                Log.i("MyAudioRecordService", "new action:" + action);
                 handleActionStart();
             } else if (ACTION_STOP_RECORDING.equals(action))
             {
+                Log.i("MyAudioRecordService", "new action:" + action);
                 handleActionStop();
             } else if (ACTION_CANCEL_RECORDING.equals(action))
             {
+                Log.i("MyAudioRecordService", "new action:" + action);
                 handleActionCancel();
+            } else if (ACTION_TICK.equals(action))
+            {
+                onTick();
             }
         }
         return Service.START_STICKY;
     }
 
-    private void showNotification()
+    private void onTick()
     {
-        //todo finish notification
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .setContentTitle("My notification")
-                        .setContentText("Hello World!");
-        Intent resultIntent = new Intent(this, MyNoteActivity.class);//todo pass note id
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, resultIntent, 0);
-        mBuilder.setContentIntent(pendingIntent);
-        startForeground(ONGOING_NOTIFICATION_ID, mBuilder.build());
+        ++seconds;
+        updateNotification(getNotificationObj(seconds));
+        if (listener != null)
+        {
+            listener.onTick(seconds);
+        }
     }
 
+    private void startTimer()
+    {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, MyAudioRecorderIntentService.class);
+        intent.setAction(MyAudioRecorderIntentService.ACTION_TICK);
+
+        alarmIntent = PendingIntent.getService(this, ALARM_ID, intent, 0);
+        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 1000, 1000, alarmIntent);
+    }
+
+    private void stopTimer()
+    {
+        if (alarmIntent != null)
+        {
+
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            alarmManager.cancel(alarmIntent);
+        }
+    }
+
+    private Notification getNotificationObj(int s)
+    {
+        Intent tapIntent = new Intent(this, MyNoteActivity.class);
+        //tapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if (activityCallbackBundle != null)
+        {
+            tapIntent.putExtras(activityCallbackBundle);
+        }
+
+        Intent stopIntent = new Intent(this, MyAudioRecorderIntentService.class);
+        stopIntent.setAction(ACTION_STOP_RECORDING);
+
+        PendingIntent pendingTapIntent = PendingIntent.getActivity(this, 0, tapIntent, 0);
+        PendingIntent pendingStopIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        RemoteViews notiView = new RemoteViews(getPackageName(), R.layout.custom_notification);
+        notiView.setOnClickPendingIntent(R.id.notiSaveImageButton, pendingStopIntent);
+        notiView.setOnClickPendingIntent(R.id.notiOpenActivityButton, pendingTapIntent);
+        notiView.setTextViewText(R.id.notiSecondsTextView, "" + (s % 60));
+        notiView.setTextViewText(R.id.notiMinutesTextView, "" + ((s / 60) == 0 ? "00" : (s / 60)));
+        notiView.setTextViewText(R.id.notiHoursTextView, "" + ((s / 60 / 60) == 0 ? "00" : (s / 60 / 60)));
+
+        if (notiBuilder == null)
+        {
+            notiBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_stat_ic_notification_notebook)
+                            .setOngoing(true);
+        } else
+        {
+            notiBuilder.setContent(notiView);
+        }
+        //notiBuilder.setContentIntent(pendingTapIntent);
+        return notiBuilder.build();
+    }
+
+    private void showNotification(Notification notification)
+    {
+        startForeground(ONGOING_NOTIFICATION_ID, notification);
+    }
+
+    private void updateNotification(Notification notification)
+    {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, notification);
+    }
     private void hideNotification()
     {
         stopForeground(true);
@@ -220,7 +298,8 @@ public class MyAudioRecorderIntentService extends Service
             {
                 listener.onStateChange(state);
             }
-            showNotification();
+            showNotification(getNotificationObj(seconds));
+            startTimer();
         }
     }
 
@@ -228,16 +307,7 @@ public class MyAudioRecorderIntentService extends Service
     {
         if (state == MyRecorderState.recording)
         {
-            stopVoiceRecognition();
-            recorder.stop();
-            recorder.release();
-            recorder = null;
-            state = MyRecorderState.stoped;
-            if (listener != null)
-            {
-                listener.onStateChange(state);
-            }
-
+            stopStuff();
             if (listener != null)
             {
                 try
@@ -248,11 +318,15 @@ public class MyAudioRecorderIntentService extends Service
                     e.printStackTrace();
                 }
             }
-            hideNotification();
         }
     }
 
     private void handleActionCancel()
+    {
+        stopStuff();
+    }
+
+    private void stopStuff()
     {
         if (state == MyRecorderState.recording)
         {
@@ -266,10 +340,11 @@ public class MyAudioRecorderIntentService extends Service
             {
                 listener.onStateChange(state);
             }
+            stopTimer();
             hideNotification();
+            seconds = 0;
         }
     }
-
     public enum MyRecorderState
     {
         recording, stoped

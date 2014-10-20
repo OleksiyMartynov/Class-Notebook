@@ -96,11 +96,11 @@ public class MyPaintNoteFragment extends Fragment implements MyNoteFragmentProto
 
 
     @Override
-    public byte[] getNoteData()
+    public void getNoteData(MyNoteFragmentDataCallBack callBack)
     {
         Bitmap b = paintView.getViewAsBitmap();
         data = MyScreenCapper.bitmapToByteArr(b);
-        return data;
+        callBack.onDataReady(data);
     }
 
     @Override

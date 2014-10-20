@@ -31,7 +31,8 @@
         <activity
             android:name=".controllers.MyNoteActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_my_note">
+            android:label="@string/title_activity_my_note"
+            android:launchMode="singleTask">
         </activity>
 
         <service

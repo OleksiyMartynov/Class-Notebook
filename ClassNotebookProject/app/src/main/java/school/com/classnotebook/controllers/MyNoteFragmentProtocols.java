@@ -5,7 +5,13 @@ package school.com.classnotebook.controllers;
  */
 public interface MyNoteFragmentProtocols
 {
-    public byte[] getNoteData();
+    //public byte[] getNoteData();
+    public void getNoteData(MyNoteFragmentDataCallBack callback);
 
     public void setNoteData(byte[] data);
+
+    public interface MyNoteFragmentDataCallBack
+    {
+        void onDataReady(byte[] data);
+    }
 }

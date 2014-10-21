@@ -115,7 +115,7 @@ public class MyAudioRecorderIntentService extends Service
     private void onTick()
     {
         ++seconds;
-        updateNotification(getNotificationObj(seconds));
+        updateNotification(getSmallNotiObj(seconds));
         if (listener != null)
         {
             listener.onTick(seconds);
@@ -141,8 +141,27 @@ public class MyAudioRecorderIntentService extends Service
             alarmManager.cancel(alarmIntent);
         }
     }
-
-    private Notification getNotificationObj(int s)
+    private Notification getSmallNotiObj(int s)
+    {
+        Intent tapIntent = new Intent(this, MyNoteActivity.class);
+        if(activityCallbackBundle!=null) {
+            tapIntent.putExtras(activityCallbackBundle);
+        }
+        PendingIntent pIntent = PendingIntent.getActivity(this,0,tapIntent,0);
+        if(notiBuilder==null)
+        {
+            notiBuilder=new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_stat_ic_notification_notebook)
+                    .setContentTitle("Recording...")
+                    .setOngoing(true);
+        }
+        String sec = ""+(s%60);
+        String min = s/60==0?"00":""+s/60;
+        String hr = s/60/60==0?"00":""+s/60/60;
+        notiBuilder.setContentText(hr+":"+min+":"+sec);
+        notiBuilder.setContentIntent(pIntent);
+        return notiBuilder.build();
+    }
+    private Notification getNotificationObjDEPR(int s)
     {
         Intent tapIntent = new Intent(this, MyNoteActivity.class);
         //tapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -298,7 +317,7 @@ public class MyAudioRecorderIntentService extends Service
             {
                 listener.onStateChange(state);
             }
-            showNotification(getNotificationObj(seconds));
+            showNotification(getSmallNotiObj(seconds));
             startTimer();
         }
     }

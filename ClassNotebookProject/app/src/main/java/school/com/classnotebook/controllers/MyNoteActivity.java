@@ -130,6 +130,7 @@ public class MyNoteActivity extends ActionBarActivity
     public boolean onCreateOptionsMenu(Menu menu)
     {
         getMenuInflater().inflate(R.menu.my_note, menu);
+        /*
         if (noteType.equals(MyNoteData.Type.audio.toString()))
         {
             MenuItem save = menu.findItem(R.id.action_save_note);
@@ -139,7 +140,7 @@ public class MyNoteActivity extends ActionBarActivity
                 MenuItem cancel = menu.findItem(R.id.action_cancel_note);
                 cancel.setVisible(false);
             }
-        }
+        }*/
         return true;
     }
 
@@ -502,7 +503,7 @@ public class MyNoteActivity extends ActionBarActivity
         private byte[] data;
         private View rootView;
         private MediaPlayer player;
-
+        private MyNoteFragmentDataCallBack callback;
         public MyAudioNoteFragment()
         {
         }
@@ -558,7 +559,9 @@ public class MyNoteActivity extends ActionBarActivity
 
             rootView.findViewById(R.id.audioRecordLayour).setVisibility(View.GONE);
             rootView.findViewById(R.id.audioPauseButton).setVisibility(View.GONE);//cant pause audio recorder
-            rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
+            rootView.findViewById(R.id.audioMainLayout).setVisibility(View.GONE);
+            //rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
+            /*
             ImageButton stopButton = (ImageButton) rootView.findViewById(R.id.audioStopButton);
             stopButton.setOnClickListener(new View.OnClickListener()
             {
@@ -576,9 +579,10 @@ public class MyNoteActivity extends ActionBarActivity
                 public void onClick(View view)
                 {
                     MyAudioRecorderIntentService.cancelRecording(getActivity().getBaseContext());
-                    getActivity().finish();
+                    //getActivity().finish();
                 }
             });
+            */
         }
 
         private void showPlayBackControls()
@@ -609,7 +613,8 @@ public class MyNoteActivity extends ActionBarActivity
         @Override
         public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
-            callBack.onDataReady(data);
+            MyAudioRecorderIntentService.stopRecording(getActivity().getBaseContext());
+            this.callback=callBack;
         }
 
         @Override
@@ -640,7 +645,8 @@ public class MyNoteActivity extends ActionBarActivity
         {
             this.data = data;
             Log.i("MyAudioFragment", "got data with size:" + data.length);
-            getActivity().finish();
+            //getActivity().finish();
+            callback.onDataReady(data);
         }
 
         @Override

@@ -15,6 +15,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.List;
 
 import helpers.MyFileWriter;
@@ -70,6 +71,18 @@ public class MyNoteListAdapter extends ArrayAdapter<MyNoteData>
                 public void onClick(View view)
                 {
                     Log.i("NoteAdapter", " share audio note tapped");
+                    try
+                    {
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+
+                        intent.putExtra(Intent.EXTRA_TEXT, noteData.getName());
+                        intent.putExtra(Intent.EXTRA_STREAM, MyFileWriter.getUriFromAudioFileFromBytes(noteData.getData(), "/audiorecord.3gp"));
+                        intent.setType("audio/*");
+                        getContext().startActivity(Intent.createChooser(intent, "Share audio note"));
+                    } catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
             });
         } else if (noteData.getTypeOfData().equals(MyNoteData.Type.drawing.toString()))

@@ -68,6 +68,14 @@ public class MyFileWriter
         return uri;
     }
 
+    public static Uri getUriFromAudioFileFromBytes(byte[] data, String name) throws IOException
+    {
+        Uri uri = Uri.fromFile(MyFileWriter.appendFileNameToPath(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), name));
+        FileOutputStream fos = new FileOutputStream(uri.getPath());
+        fos.write(data);
+        fos.close();
+        return uri;
+    }
     public static Uri getUriFromAudioFileFromBytesPrivate(Context c, byte[] data, String name) throws IOException
     {
         Uri uri = Uri.fromFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getInternalStoragePath(c), name));

@@ -112,4 +112,10 @@ public class MyPaintNoteFragment extends Fragment implements MyNoteFragmentProto
             paintView.setBackground(MyFileWriter.bitmapFromByteArra(data));
         }
     }
+
+    @Override
+    public void requestStop()
+    {
+
+    }
 }

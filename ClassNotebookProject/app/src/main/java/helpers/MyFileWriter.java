@@ -10,6 +10,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Created by Oleksiy on 5/13/2014.
@@ -67,6 +68,14 @@ public class MyFileWriter
         return uri;
     }
 
+    public static Uri getUriFromAudioFileFromBytesPrivate(Context c, byte[] data, String name) throws IOException
+    {
+        Uri uri = Uri.fromFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getInternalStoragePath(c), name));
+        FileOutputStream fos = new FileOutputStream(uri.getPath());
+        fos.write(data);
+        fos.close();
+        return uri;
+    }
     public static Uri getUriForImageFile(Bitmap b, String name)
     {
         Uri uri = MyFileWriter.saveBitmapToFile(MyFileWriter.appendFileNameToPath(MyFileWriter.getExternalStoragePath(), name), b);

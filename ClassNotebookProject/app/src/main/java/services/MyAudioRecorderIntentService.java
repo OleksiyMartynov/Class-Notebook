@@ -223,37 +223,37 @@ public class MyAudioRecorderIntentService extends Service
                 @Override
                 public void onReadyForSpeech(Bundle bundle)
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "ready for speech");
                 }
 
                 @Override
                 public void onBeginningOfSpeech()
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "beginning of speech");
                 }
 
                 @Override
                 public void onRmsChanged(float v)
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "rms changed");
                 }
 
                 @Override
                 public void onBufferReceived(byte[] bytes)
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "buffer received");
                 }
 
                 @Override
                 public void onEndOfSpeech()
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "end of speech");
                 }
 
                 @Override
                 public void onError(int i)
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "error:" + i);
                 }
 
                 @Override
@@ -271,18 +271,24 @@ public class MyAudioRecorderIntentService extends Service
                 @Override
                 public void onPartialResults(Bundle bundle)
                 {
-
+                    ArrayList<String> resultList = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    Log.i("MyAudioRecordingService", "Partial Voice Recognition results:");
+                    for (String str : resultList)
+                    {
+                        Log.i("MyAudioRecordingService", str);
+                    }
                 }
 
                 @Override
                 public void onEvent(int i, Bundle bundle)
                 {
-
+                    Log.i("MyAudioRecordingService", "AudioRecognition:" + "event");
                 }
             });
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getApplicationContext().getPackageName());
             sr.startListening(intent);
+            Log.i("MyAudioRecordingService", "AudioRecognition:" + "Started!");
         } else
         {
             Log.i("MyAudioRecordingService", "voice recognition not available");
@@ -311,7 +317,6 @@ public class MyAudioRecorderIntentService extends Service
                 e.printStackTrace();
             }
             recorder.start();
-            //todo start timer and call listener.onTick;
             state = MyRecorderState.recording;
             if (listener != null)
             {

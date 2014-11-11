@@ -1,6 +1,5 @@
 package school.com.classnotebook.controllers;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -25,11 +24,11 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -190,6 +189,7 @@ public class MyNoteActivity extends ActionBarActivity
             }
             case R.id.action_cancel_note:
             {
+                mainFragment.requestStop();
                 finish();
                 break;
             }
@@ -258,6 +258,12 @@ public class MyNoteActivity extends ActionBarActivity
             {
                 ((EditText) rootView.findViewById(R.id.textNoteEditText)).setText(new String(data));
             }
+        }
+
+        @Override
+        public void requestStop()
+        {
+
         }
     }
 
@@ -402,6 +408,12 @@ public class MyNoteActivity extends ActionBarActivity
                 imgView.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
             }
         }
+
+        @Override
+        public void requestStop()
+        {
+
+        }
     }
 
     public static class MyDrawingNoteFragment extends Fragment implements MyNoteFragmentProtocols
@@ -468,6 +480,12 @@ public class MyNoteActivity extends ActionBarActivity
             }
         }
 
+        @Override
+        public void requestStop()
+        {
+
+        }
+
         private class MyWebViewClient extends WebViewClient
         {
             int width;
@@ -516,14 +534,13 @@ public class MyNoteActivity extends ActionBarActivity
             {
                 rootView.findViewById(R.id.audioRecordLayour).setVisibility(View.GONE);
                 player = new MediaPlayer();
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audiorecord.3gp";
                 try
                 {
                     //todo wrap in loading bar
-                    FileOutputStream fos = getActivity().openFileOutput(path, Context.MODE_PRIVATE);
-                    fos.write(data);
-                    fos.close();
-                    player.setDataSource(path);
+
+                    player.setDataSource(getActivity(), MyFileWriter.getUriFromAudioFileFromBytesPrivate(getActivity(), data, "/audiorecord.3gp"));
+                    player.prepare();
+
                 } catch (Exception e)
                 {
                     Log.w("MyAudioFragment", e.getMessage());
@@ -558,38 +575,102 @@ public class MyNoteActivity extends ActionBarActivity
         {
 
             rootView.findViewById(R.id.audioRecordLayour).setVisibility(View.GONE);
-            rootView.findViewById(R.id.audioPauseButton).setVisibility(View.GONE);//cant pause audio recorder
             rootView.findViewById(R.id.audioMainLayout).setVisibility(View.GONE);
-            //rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
-            /*
-            ImageButton stopButton = (ImageButton) rootView.findViewById(R.id.audioStopButton);
-            stopButton.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View view)
-                {
-
-                    MyAudioRecorderIntentService.stopRecording(getActivity().getBaseContext());
-                }
-            });
-            ImageButton cancelButton = (ImageButton) rootView.findViewById(R.id.audioCancelButton);
-            cancelButton.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View view)
-                {
-                    MyAudioRecorderIntentService.cancelRecording(getActivity().getBaseContext());
-                    //getActivity().finish();
-                }
-            });
-            */
         }
 
         private void showPlayBackControls()
         {
             rootView.findViewById(R.id.audioSliderLayout).setVisibility(View.VISIBLE);
             rootView.findViewById(R.id.audioMainLayout).setVisibility(View.VISIBLE);
-            rootView.findViewById(R.id.audioPauseButton).setVisibility(View.VISIBLE);
+            final ImageButton playStopButton = (ImageButton) rootView.findViewById(R.id.audioStopButton);
+            playStopButton.setImageResource(R.drawable.ic_action_play);
+            final SeekBar progBar = (SeekBar) rootView.findViewById(R.id.seekBar);
+            final int max = player.getDuration();
+            progBar.setMax(max);
+            progBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
+            {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser)
+                {
+                    if (fromUser)
+                    {
+                        player.seekTo(i);
+                        int s = (int) ((float) i / 1000f);
+                        onTick(s);
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar)
+                {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar)
+                {
+
+                }
+            });
+
+            playStopButton.setOnClickListener(new View.OnClickListener()
+            {
+                private boolean playing = false;
+
+                @Override
+                public void onClick(View view)
+                {
+                    playing = !playing;
+                    if (playing)
+                    {
+                        playStopButton.setImageResource(R.drawable.ic_action_pause);
+                        player.start();
+                        new Thread(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                while (player != null)
+                                {
+                                    if (!player.isPlaying())
+                                    {
+                                        return;
+                                    }
+                                    try
+                                    {
+                                        Thread.sleep(1000);
+                                        ((SeekBar) rootView.findViewById(R.id.seekBar)).setProgress(player.getCurrentPosition());
+                                        int s = (int) ((float) player.getCurrentPosition() / 1000f);
+                                        Log.i("MyAudioNoteFragment", "s:" + s);
+                                        onTick(s);
+                                    } catch (InterruptedException e)
+                                    {
+                                        return;
+                                    } catch (Exception e)
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+                        }).start();
+                    } else
+                    {
+                        playStopButton.setImageResource(R.drawable.ic_action_play);
+                        player.pause();
+                    }
+                }
+            });
+            player.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+            {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer)
+                {
+                    playStopButton.performClick();//in order to keep correct flag order
+                    //progBar.setProgress(0);
+                }
+            });
+
+
         }
         @Override
         public void onPause()
@@ -613,8 +694,14 @@ public class MyNoteActivity extends ActionBarActivity
         @Override
         public void getNoteData(MyNoteFragmentDataCallBack callBack)
         {
-            MyAudioRecorderIntentService.stopRecording(getActivity().getBaseContext());
-            this.callback=callBack;
+            if (data != null)//edit audio note, just return existing data
+            {
+                callBack.onDataReady(data); //todo once speach to text is implemented user will be able to edit text
+            } else//save audio rec from service
+            {
+                MyAudioRecorderIntentService.stopRecording(getActivity().getBaseContext());
+                this.callback = callBack;
+            }
         }
 
         @Override
@@ -624,20 +711,34 @@ public class MyNoteActivity extends ActionBarActivity
         }
 
         @Override
-        public void onTick(int timeSeconds)
+        public void requestStop()
         {
-            try //sometimes service starts before view is made visible
+            MyAudioRecorderIntentService.cancelRecording(getActivity());
+        }
+
+        @Override
+        public void onTick(final int timeSeconds)
+        {
+            getActivity().runOnUiThread(new Runnable()
             {
-                TextView secTextView = (TextView) rootView.findViewById(R.id.audioSecondsTextView);
-                TextView minTextView = (TextView) rootView.findViewById(R.id.audioMinutesTextView);
-                TextView hrTextView = (TextView) rootView.findViewById(R.id.audioHoursTextView);
-                secTextView.setText("" + (timeSeconds % 60));
-                minTextView.setText("" + ((timeSeconds / 60) == 0 ? "00" : (timeSeconds / 60)));
-                hrTextView.setText("" + ((timeSeconds / 60 / 60) == 0 ? "00" : (timeSeconds / 60 / 60)));
-            } catch (Exception e)
-            {
-                Log.i("MyAudioFragment", "missing layout");
-            }
+                @Override
+                public void run()
+                {
+                    try //sometimes service starts before view is made visible
+                    {
+                        TextView secTextView = (TextView) rootView.findViewById(R.id.audioSecondsTextView);
+                        TextView minTextView = (TextView) rootView.findViewById(R.id.audioMinutesTextView);
+                        TextView hrTextView = (TextView) rootView.findViewById(R.id.audioHoursTextView);
+                        secTextView.setText("" + (timeSeconds % 60));
+                        minTextView.setText("" + ((timeSeconds / 60) == 0 ? "00" : (timeSeconds / 60)));
+                        hrTextView.setText("" + ((timeSeconds / 60 / 60) == 0 ? "00" : (timeSeconds / 60 / 60)));
+                    } catch (Exception e)
+                    {
+                        Log.i("MyAudioFragment", e.getMessage());
+                    }
+                }
+            });
+
         }
 
         @Override
@@ -646,7 +747,10 @@ public class MyNoteActivity extends ActionBarActivity
             this.data = data;
             Log.i("MyAudioFragment", "got data with size:" + data.length);
             //getActivity().finish();
-            callback.onDataReady(data);
+            if (callback != null)
+            {
+                callback.onDataReady(data);
+            }
         }
 
         @Override

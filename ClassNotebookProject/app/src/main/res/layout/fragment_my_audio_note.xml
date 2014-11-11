@@ -77,20 +77,6 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/audioCancelButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_cancel"
-                android:tint="#ff494949"/>
-
-            <ImageButton
-                android:id="@+id/audioPauseButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:focusableInTouchMode="false"
-                android:src="@drawable/ic_action_pause"/>
-
-            <ImageButton
                 android:id="@+id/audioStopButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

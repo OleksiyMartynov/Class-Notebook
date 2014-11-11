@@ -10,6 +10,7 @@ public interface MyNoteFragmentProtocols
 
     public void setNoteData(byte[] data);
 
+    public void requestStop();
     public interface MyNoteFragmentDataCallBack
     {
         void onDataReady(byte[] data);
